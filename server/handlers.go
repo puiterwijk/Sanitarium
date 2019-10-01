@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/puiterwijk/dendraeck/server/types"
+	"github.com/puiterwijk/dendraeck/shared/types"
 )
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {

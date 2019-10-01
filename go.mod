@@ -1,4 +1,4 @@
-module github.com/puiterwijk/dendraeck/client
+module github.com/puiterwijk/dendraeck
 
 go 1.12
 

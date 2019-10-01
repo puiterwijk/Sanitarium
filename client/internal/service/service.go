@@ -12,10 +12,12 @@ import (
 
 	oidc "github.com/coreos/go-oidc"
 	"golang.org/x/oauth2"
+
+	"github.com/puiterwijk/dendraeck/shared/types"
 )
 
 type Service struct {
-	info         ServiceInfo
+	info         types.ServiceInfo
 	provider     *oidc.Provider
 	oauth2config oauth2.Config
 }
