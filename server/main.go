@@ -9,6 +9,8 @@ import (
 
 func registerHandlers() {
 	http.HandleFunc("/", homeHandler)
+	http.HandleFunc("/info", serviceInfoHandler)
+	http.HandleFunc("/cert/intermediate", intermediateCertHandler)
 }
 
 func main() {
