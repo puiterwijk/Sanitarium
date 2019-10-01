@@ -6,6 +6,7 @@ import (
 	oidc "github.com/coreos/go-oidc"
 
 	int_cache "github.com/puiterwijk/dendraeck/client/internal/cache"
+	tpm "github.com/puiterwijk/dendraeck/client/internal/tpm"
 )
 
 var (
@@ -18,4 +19,6 @@ func main() {
 	cache = int_cache.New("~/sshcache")
 
 	fmt.Println("Hello")
+
+	tpm.GetPubEK()
 }
