@@ -1,7 +1,9 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"log"
 
 	oidc "github.com/coreos/go-oidc"
 
@@ -15,10 +17,14 @@ var (
 )
 
 func main() {
+	flag.Parse()
+
 	// TODO: Customize the name here based on binary name
 	cache = int_cache.New("~/sshcache")
 
-	fmt.Println("Hello")
-
-	tpm.GetPubEK()
+	ekcert, err := tpm.GetEKCert()
+	if err != nil {
+		log.Fatalf("Error getting EKCert: %s", err)
+	}
+	fmt.Println(ekcert)
 }
