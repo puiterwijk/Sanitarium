@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -20,33 +21,62 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 var (
-	// TODO: Configurable
 	serviceinfo = types.ServiceInfo{
-		Root: "https://server-dendraeck.e4ff.pro-eu-west-1.openshiftapps.com",
+		Root: os.Getenv("SERVICE_ROOT"),
 		OIDC: types.ServiceInfoOIDC{
-			//ProviderRoot:   "https://accounts.google.com",
-			//ClientID:       "764142782493-lclqihkqp60ru43plumj5vpi81opcluo.apps.googleusercontent.com",
-			//ClientSecret:   "i-NLsLi0qCKT7oSrOpntwiYh",
-			ProviderRoot:   "https://iddev.fedorainfracloud.org/openidc/",
-			ClientID:       "sshcerttest",
-			ClientSecret:   "AAL37W2nbPTLuHdniCNJFlksyXW1yaoK",
-			SupportsOOB:    false,
-			RequiredScopes: []string{"openid", "profile"},
+			ProviderRoot:   os.Getenv("OIDC_PROVIDER_ROOT"),
+			ClientID:       os.Getenv("OIDC_CLIENT_ID"),
+			ClientSecret:   os.Getenv("OIDC_CLIENT_SECRET"),
+			SupportsOOB:    getEnvironBool("OIDC_SUPPORTS_OOB", true),
+			RequiredScopes: strings.Split(os.Getenv("OIDC_REQUIRED_SCOPES"), ","),
 		},
 		Requirements: types.ServiceInfoRequirements{
-			TPM:          true,
-			Measurements: false,
+			TPM:          getEnvironBool("REQUIRE_TPM", true),
+			Measurements: getEnvironBool("REQUIRE_MEASUREMENT", false),
 		},
 	}
-	//tokenInfoURL                 = "https://www.googleapis.com/oauth2/v3/tokeninfo"
-	tokenInfoURL                 = "https://iddev.fedorainfracloud.org/openidc/TokenInfo"
-	usedClaim                    = "sub"
-	intermediateValidityDuration = "8h"
-	intermediateSigningSecret    = "foo"
-	certValidityDuration         = "10m"
-	sshSignerPath                = os.Getenv("SIGNER_KEY_PATH")
-	addGitHubOption              = true
+	tokenInfoURL                 = os.Getenv("OIDC_TOKEN_INFO_URL")
+	usedClaim                    = getEnvironString("OIDC_USERNAME_CLAIM", "sub")
+	intermediateValidityDuration = getEnvironString("INTERMEDIATE_CERT_VALIDITY", "8h")
+	intermediateSigningSecret    = os.Getenv("INTERMEDIATE_SIGNING_SECRET")
+	certValidityDuration         = getEnvironString("SSH_CERT_VALIDITY", "5m")
+	sshSignerPath                = os.Getenv("SSH_CERT_SIGNER_KEY_PATH")
+	addGitHubOption              = getEnvironBool("SSH_CERT_ADD_GITHUB", false)
 )
+
+func getEnvironBool(envname string, def bool) bool {
+	envval := strings.ToLower(os.Getenv(envname))
+	switch envval {
+	case "":
+		return def
+
+	case "yes":
+		return true
+	case "1":
+		return true
+	case "true":
+		return true
+
+	case "no":
+		return false
+	case "0":
+		return false
+	case "false":
+		return false
+
+	default:
+		log.Fatalf("Environment variable %s is set to %s, which is not a valid bool value", envname, envval)
+	}
+	return def
+}
+
+func getEnvironString(envname string, def string) string {
+	envval := os.Getenv(envname)
+	if envval == "" {
+		return def
+	}
+	return envval
+}
 
 var (
 	intermediateSigner   jose.Signer
