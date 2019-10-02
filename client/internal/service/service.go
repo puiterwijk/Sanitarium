@@ -14,21 +14,19 @@ import (
 	oidc "github.com/coreos/go-oidc"
 	"golang.org/x/oauth2"
 
+	int_cache "github.com/puiterwijk/dendraeck/client/internal/cache"
 	"github.com/puiterwijk/dendraeck/shared/types"
 )
 
 type Service struct {
-	serverroot   string
+	cache *int_cache.Cache
+
 	info         types.ServiceInfo
 	provider     *oidc.Provider
 	oauth2config oauth2.Config
 }
 
-func GetService(ctx context.Context, serverroot string) (*Service, error) {
-	if strings.HasSuffix(serverroot, "/") {
-		serverroot = serverroot[:len(serverroot)-1]
-	}
-
+func GetService(ctx context.Context, cache *int_cache.Cache, serverroot string) (*Service, error) {
 	resp, err := http.Get(serverroot + "/info")
 	if err != nil {
 		return nil, err
@@ -41,7 +39,7 @@ func GetService(ctx context.Context, serverroot string) (*Service, error) {
 	}
 
 	var service Service
-	service.serverroot = serverroot
+	service.cache = cache
 	err = json.Unmarshal(cts, &service.info)
 	if err != nil {
 		return nil, err
@@ -60,6 +58,18 @@ func GetService(ctx context.Context, serverroot string) (*Service, error) {
 		RedirectURL: "urn:ietf:wg:oauth:2.0:oob",
 	}
 	return &service, nil
+}
+
+func (s *Service) GetServerRoot() string {
+	return s.info.Root
+}
+
+func (s *Service) RequiresAIK() bool {
+	return s.info.Requirements.AIK
+}
+
+func (s *Service) RequiresMeasurement() bool {
+	return s.info.Requirements.Measurements
 }
 
 func (s *Service) GetAuthorizationCode() (string, error) {
@@ -93,7 +103,7 @@ func (s *Service) performRequest(relurl string, request interface{}, response in
 	if err != nil {
 		return err
 	}
-	resp, err := http.Post(s.serverroot+relurl, "text/json", &buf)
+	resp, err := http.Post(s.info.Root+relurl, "text/json", &buf)
 	if err != nil {
 		return err
 	}
@@ -110,11 +120,11 @@ func (s *Service) performRequest(relurl string, request interface{}, response in
 	return json.Unmarshal(apiresp.Response, response)
 }
 
-func (s *Service) RetrieveIntermediateCertificate(authzcode string, TPMInfo interface{}) error {
+func (s *Service) RetrieveIntermediateCertificate(authzcode string, attestation *types.IntermediateCertificateRequestAttestation) error {
 	var request types.IntermediateCertificateRequest
 
 	request.AuthorizationCode = authzcode
-	// TODO: Add TPM Info stuff
+	request.Attestation = *attestation
 
 	var response string
 
@@ -122,7 +132,5 @@ func (s *Service) RetrieveIntermediateCertificate(authzcode string, TPMInfo inte
 		return err
 	}
 
-	fmt.Println("Response: ", response)
-
-	return nil
+	return s.cache.SaveIntermediateCertificate(response, s.info.Root)
 }
