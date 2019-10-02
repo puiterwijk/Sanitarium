@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/go-attestation/attest"
 	"github.com/square/go-jose/v3/jwt"
+	"golang.org/x/crypto/ssh"
 )
 
 func getHome() string {
@@ -51,6 +52,7 @@ type Cache struct {
 	dir        string
 	serverroot string
 	tpm        *attest.TPM
+	sshpubkey  ssh.PublicKey
 }
 
 func New(serverroot string) *Cache {
@@ -66,8 +68,35 @@ func (c *Cache) Close() {
 	}
 }
 
+func (c *Cache) SetSSHPublicKey(stringkey string) {
+	pubkey, _, _, _, err := ssh.ParseAuthorizedKey([]byte(stringkey))
+	if err != nil {
+		panic(fmt.Errorf("Error parsing server public SSH key: %s", err))
+	}
+	c.sshpubkey = pubkey
+}
+
 func (c *Cache) validateSSHCert(certcontents []byte) error {
-	return fmt.Errorf("validateSSHCert not implemented")
+	pubkey, _, _, _, err := ssh.ParseAuthorizedKey(certcontents)
+	if err != nil {
+		return fmt.Errorf("Error parsing public key: %s", err)
+	}
+	cert, ok := pubkey.(*ssh.Certificate)
+	if !ok {
+		return fmt.Errorf("Error parsing certificate as such")
+	}
+
+	intuser, err := c.GetIntermediateCertificateUsername()
+	if err != nil {
+		return fmt.Errorf("Error getting intermediate username: %s", err)
+	}
+
+	checker := new(ssh.CertChecker)
+	err = checker.CheckCert(intuser, cert)
+	if err != nil {
+		return fmt.Errorf("Error checking certificate: %s", err)
+	}
+	return nil
 }
 
 func (c *Cache) GetSSHCert(servername string) (string, string, error) {
@@ -89,6 +118,9 @@ func (c *Cache) GetSSHCert(servername string) (string, string, error) {
 }
 
 func (c *Cache) SaveSSHCert(servername string, privkey, pubcert []byte) error {
+	if err := c.validateSSHCert(pubcert); err != nil {
+		return fmt.Errorf("Error validating ssh cert before saving: %s", err)
+	}
 	certpath := path.Join(c.dir, servername+".sshcert.pem")
 	keypath := path.Join(c.dir, servername+".sshkey.pem")
 
@@ -101,29 +133,29 @@ func (c *Cache) SaveSSHCert(servername string, privkey, pubcert []byte) error {
 	return nil
 }
 
-func (c *Cache) validateIntermediateCertificate(rawtoken string) error {
+func (c *Cache) validateIntermediateCertificate(rawtoken string) (string, error) {
 	// Validate that this is an intermediate cert by the correct service, and still valid
 	token, err := jwt.ParseSigned(rawtoken)
 	if err != nil {
-		return fmt.Errorf("Error parsing intermediate cert: %s", err)
+		return "", fmt.Errorf("Error parsing intermediate cert: %s", err)
 	}
 
 	var claims jwt.Claims
 	err = token.UnsafeClaimsWithoutVerification(&claims)
 	if err != nil {
-		return fmt.Errorf("Error parsing intermediate certificate: %s", err)
+		return "", fmt.Errorf("Error parsing intermediate certificate: %s", err)
 	}
 	err = claims.Validate(jwt.Expected{
 		Issuer: c.serverroot,
 	})
 	if err != nil {
-		return fmt.Errorf("Error with the intermediate certificate: %s", err)
+		return "", fmt.Errorf("Error with the intermediate certificate: %s", err)
 	}
-	return nil
+	return claims.Subject, nil
 }
 
 func (c *Cache) SaveIntermediateCertificate(rawtoken string) error {
-	if err := c.validateIntermediateCertificate(rawtoken); err != nil {
+	if _, err := c.validateIntermediateCertificate(rawtoken); err != nil {
 		return fmt.Errorf("Error validating intermediate certificate for storage: %s", err)
 	}
 
@@ -139,12 +171,28 @@ func (c *Cache) GetIntermediateCertificate() (string, error) {
 	}
 
 	rawtoken := string(cert)
-	err = c.validateIntermediateCertificate(rawtoken)
+	_, err = c.validateIntermediateCertificate(rawtoken)
 	if err != nil {
 		return "", fmt.Errorf("Error validating intermediate certificate: %s", err)
 	}
 
 	return rawtoken, nil
+}
+
+func (c *Cache) GetIntermediateCertificateUsername() (string, error) {
+	intcertpath := path.Join(c.dir, "intermediatecert.jwt")
+	cert, err := ioutil.ReadFile(intcertpath)
+	if err != nil {
+		return "", err
+	}
+
+	rawtoken := string(cert)
+	username, err := c.validateIntermediateCertificate(rawtoken)
+	if err != nil {
+		return "", fmt.Errorf("Error validating intermediate certificate: %s", err)
+	}
+
+	return username, nil
 }
 
 func (c *Cache) ensureTPM() {

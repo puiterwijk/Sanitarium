@@ -44,7 +44,7 @@ func getSSHCertAndKeyFromIntermediate(cache *int_cache.Cache, svc *service.Servi
 	if err != nil {
 		log.Fatalf("Error retrieving SSH certificate with intermediate: %s", err)
 	}
-	return "", "", nil
+	return cache.GetSSHCert(sshServerName)
 }
 
 func getSSHCertAndKey(cache *int_cache.Cache) (string, string) {
@@ -52,8 +52,6 @@ func getSSHCertAndKey(cache *int_cache.Cache) (string, string) {
 	cert, key, err := cache.GetSSHCert(sshServerName)
 	if err == nil {
 		return cert, key
-	} else if !os.IsNotExist(err) {
-		log.Fatalf("Error while checking cache for temp key: %s", err)
 	}
 
 	// We have no SSH cert, initiate service
