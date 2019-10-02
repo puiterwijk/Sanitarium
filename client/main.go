@@ -26,7 +26,7 @@ var (
 var (
 	// TODO: Get from somewhere
 	serverRoot        = os.Getenv("DD_SERVER_ROOT")
-	defaultServerRoot = "https://server-dendraeck.e4ff.pro-eu-west-1.openshiftapps.com/"
+	defaultServerRoot = "https://server-dendraeck.e4ff.pro-eu-west-1.openshiftapps.com"
 )
 
 func determineHostname() string {
