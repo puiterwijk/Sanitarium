@@ -66,8 +66,6 @@ func main() {
 		log.Fatalf("No hostname provided")
 	}
 	sshServerName = determineHostname()
-	fmt.Println("Hostname: ", sshServerName)
-	return
 	if sshServerName == "" {
 		log.Fatalf("No hostname detected")
 	}
