@@ -2,6 +2,7 @@ package service
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -17,12 +18,17 @@ import (
 )
 
 type Service struct {
+	serverroot   string
 	info         types.ServiceInfo
 	provider     *oidc.Provider
 	oauth2config oauth2.Config
 }
 
 func GetService(ctx context.Context, serverroot string) (*Service, error) {
+	if strings.HasSuffix(serverroot, "/") {
+		serverroot = serverroot[:len(serverroot)-1]
+	}
+
 	resp, err := http.Get(serverroot + "/info")
 	if err != nil {
 		return nil, err
@@ -35,6 +41,7 @@ func GetService(ctx context.Context, serverroot string) (*Service, error) {
 	}
 
 	var service Service
+	service.serverroot = serverroot
 	err = json.Unmarshal(cts, &service.info)
 	if err != nil {
 		return nil, err
@@ -70,4 +77,52 @@ func (s *Service) acceptManualAuthzCode() (string, error) {
 		return "", err
 	}
 	return strings.TrimSpace(text), nil
+}
+
+type apiError struct {
+	message string
+}
+
+func (a apiError) Error() string {
+	return fmt.Sprintf("API Error: %s", a.message)
+}
+
+func (s *Service) performRequest(relurl string, request interface{}, response interface{}) error {
+	var buf bytes.Buffer
+	err := json.NewEncoder(&buf).Encode(request)
+	if err != nil {
+		return err
+	}
+	resp, err := http.Post(s.serverroot+relurl, "text/json", &buf)
+	if err != nil {
+		return err
+	}
+	var apiresp types.APIResponse
+	err = json.NewDecoder(resp.Body).Decode(&apiresp)
+	if err != nil {
+		return err
+	}
+	if !apiresp.Success {
+		return apiError{
+			message: apiresp.Error,
+		}
+	}
+	return json.Unmarshal(apiresp.Response, response)
+}
+
+func (s *Service) RetrieveIntermediateCertificate(authzcode string, TPMInfo interface{}) error {
+	var request types.IntermediateCertificateRequest
+
+	request.AuthorizationCode = authzcode
+	// TODO: Add TPM Info stuff
+
+	var response string
+
+	if err := s.performRequest("/cert/intermediate", request, &response); err != nil {
+		return err
+	}
+
+	fmt.Println("Response: ", response)
+
+	return nil
 }

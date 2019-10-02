@@ -56,7 +56,11 @@ func getSSHCertAndKey() (string, string) {
 		log.Fatalf("Error getting authorization code: %s", err)
 	}
 
-	fmt.Printf("Authzcode: '%s'\n", authzcode)
+	// TODO: Perform TPM dance
+
+	if err := svc.RetrieveIntermediateCertificate(authzcode, ""); err != nil {
+		log.Fatalf("Error retrieving intermediate certificate: %s", err)
+	}
 
 	log.Fatal("Was unable to get an SSH key")
 	return "", ""
