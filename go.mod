@@ -4,6 +4,7 @@ go 1.12
 
 require (
 	github.com/coreos/go-oidc v2.1.0+incompatible
+	github.com/google/certificate-transparency-go v1.0.22-0.20190605205155-41fc2ef3a2a8
 	github.com/google/go-attestation v0.1.1
 	github.com/google/go-tpm v0.2.0
 	github.com/pquerna/cachecontrol v0.0.0-20180517163645-1555304b9b35 // indirect

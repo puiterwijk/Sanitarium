@@ -64,8 +64,8 @@ func (s *Service) GetServerRoot() string {
 	return s.info.Root
 }
 
-func (s *Service) RequiresAIK() bool {
-	return s.info.Requirements.AIK
+func (s *Service) RequiresTPM() bool {
+	return s.info.Requirements.TPM
 }
 
 func (s *Service) RequiresMeasurement() bool {

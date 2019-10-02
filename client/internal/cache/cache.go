@@ -13,34 +13,50 @@ import (
 	"github.com/square/go-jose/v3/jwt"
 )
 
-func expandPath(dir string) string {
-	if !strings.HasPrefix(dir, "~/") {
-		return dir
+func getHome() string {
+	if home := os.Getenv("HOME"); home != "" {
+		return home
 	}
 	user, err := user.Current()
 	if err != nil {
-		log.Fatalf("Error getting current user for tilde expansion: %s", user)
+		log.Fatalf("Error getting current user home: %s", user)
 	}
-	return path.Join(user.HomeDir, dir[2:])
+	return user.HomeDir
+}
+
+func ensureDir(dir string) {
+	_, err := os.Stat(dir)
+	if os.IsNotExist(err) {
+		err = os.Mkdir(dir, 0700)
+	}
+	if err != nil {
+		log.Fatalf("Error creating cache directory: %s", err)
+	}
+}
+
+func getCacheDir(serverroot string) string {
+	cachedir := path.Join(getHome(), ".ddcache")
+	ensureDir(cachedir)
+
+	serverroot = strings.Replace(serverroot, "/", "_", -1)
+	serverroot = strings.Replace(serverroot, ":", "_", -1)
+
+	cachedir = path.Join(cachedir, serverroot)
+	ensureDir(cachedir)
+
+	return cachedir
 }
 
 type Cache struct {
-	dir string
-	tpm *attest.TPM
+	dir        string
+	serverroot string
+	tpm        *attest.TPM
 }
 
-func New(dir string) *Cache {
-	dir = expandPath(dir)
-
-	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		err := os.Mkdir(dir, 0700)
-		if err != nil {
-			log.Fatalf("Error creating cache directory: %s", err)
-		}
-	}
-
+func New(serverroot string) *Cache {
 	return &Cache{
-		dir: dir,
+		serverroot: serverroot,
+		dir:        getCacheDir(serverroot),
 	}
 }
 
@@ -139,7 +155,7 @@ func (c *Cache) createAIK() (*attest.AIK, error) {
 		k.Close(c.tpm)
 		return nil, err
 	}
-	err = ioutil.WriteFile(path.Join(c.dir, "aik.json"), b, 0644)
+	err = ioutil.WriteFile(path.Join(c.dir, "aik.json"), b, 0600)
 	if err != nil {
 		k.Close(c.tpm)
 		return nil, err

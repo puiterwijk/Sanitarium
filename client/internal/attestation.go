@@ -1,14 +1,13 @@
 package internal
 
 import (
-	"bytes"
 	"crypto/rsa"
-	"crypto/x509"
-	"encoding/pem"
 	"errors"
 	"fmt"
 
+	"github.com/google/certificate-transparency-go/x509"
 	"github.com/google/go-attestation/attest"
+
 	int_cache "github.com/puiterwijk/dendraeck/client/internal/cache"
 	"github.com/puiterwijk/dendraeck/shared/types"
 )
@@ -19,32 +18,26 @@ func rsaEKPEM(tpm *attest.TPM) ([]byte, error) {
 		return nil, fmt.Errorf("failed to read EKs: %v", err)
 	}
 
-	var (
-		pk  *rsa.PublicKey
-		buf bytes.Buffer
-	)
+	var cert *x509.Certificate
 	for _, ek := range eks {
-		if pub, ok := ek.Public.(*rsa.PublicKey); ok {
-			pk = pub
+		if _, ok := ek.Public.(*rsa.PublicKey); ok {
+			cert = ek.Certificate
 			break
 		}
 	}
 
-	if pk == nil {
-		return nil, errors.New("no EK available")
+	if cert == nil {
+		return nil, errors.New("no RSA EK available")
 	}
 
-	if err := pem.Encode(&buf, &pem.Block{Type: "RSA PUBLIC KEY", Bytes: x509.MarshalPKCS1PublicKey(pk)}); err != nil {
-		return nil, fmt.Errorf("failed to PEM encode: %v", err)
-	}
-	return buf.Bytes(), nil
+	return cert.Raw, nil
 }
 
-func CreateAttestation(cache *int_cache.Cache, nonce []byte, doaik, domeasurements bool) (*types.IntermediateCertificateRequestAttestation, error) {
+func CreateAttestation(cache *int_cache.Cache, nonce []byte, dotpm, domeasurements bool) (*types.IntermediateCertificateRequestAttestation, error) {
 	var err error
 	var out types.IntermediateCertificateRequestAttestation
 
-	if !doaik {
+	if !dotpm {
 		return &out, nil
 	}
 
@@ -69,13 +62,11 @@ func CreateAttestation(cache *int_cache.Cache, nonce []byte, doaik, domeasuremen
 	}
 
 	// Add Quote
-	out.Quote.Alg = attest.HashSHA256
 	q, err := aik.Quote(tpm, nonce, attest.HashSHA256)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to get quote: %s", err)
 	}
-	out.Quote.Quote = q.Quote
-	out.Quote.Signature = q.Signature
+	out.Quote = *q
 
 	// Add log
 	if out.Log.Raw, err = tpm.MeasurementLog(); err != nil {

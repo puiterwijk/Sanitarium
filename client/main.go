@@ -21,12 +21,11 @@ var (
 
 const (
 	// TODO: Get from somewhere
-	serverURL = "http://localhost:8080/"
+	serverRoot = "http://localhost:8080"
 )
 
 func main() {
-	// TODO: Customize the name here based on binary name
-	cache = int_cache.New("~/sshcache")
+	cache = int_cache.New(serverRoot)
 	defer cache.Close()
 
 	cert, key := getSSHCertAndKey(cache)
@@ -51,7 +50,7 @@ func getSSHCertAndKey(cache *int_cache.Cache) (string, string) {
 		log.Fatalf("Error while checking cache for temp key: %s", err)
 	}
 
-	svc, err := service.GetService(context.TODO(), cache, serverURL)
+	svc, err := service.GetService(context.Background(), cache, serverRoot)
 	if err != nil {
 		log.Fatalf("Error getting service info: %s", err)
 	}
@@ -78,7 +77,7 @@ func getSSHCertAndKey(cache *int_cache.Cache) (string, string) {
 	attestation, err := internal.CreateAttestation(
 		cache,
 		nonce,
-		svc.RequiresAIK(),
+		svc.RequiresTPM(),
 		svc.RequiresMeasurement(),
 	)
 	if err != nil {

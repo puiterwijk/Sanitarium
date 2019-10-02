@@ -15,7 +15,7 @@ type ServiceInfoOIDC struct {
 }
 
 type ServiceInfoRequirements struct {
-	AIK          bool `json:"aik"`
+	TPM          bool `json:"tpm"`
 	Measurements bool `json:"measurements"`
 }
 
@@ -39,11 +39,7 @@ type IntermediateCertificateRequestAttestation struct {
 
 	AIK attest.AttestationParameters `json:"aik"`
 
-	Quote struct {
-		Alg       attest.HashAlg `json:"alg"`
-		Quote     []byte         `json:"quote"`
-		Signature []byte         `json:"signature"`
-	} `json:"quote"`
+	Quote attest.Quote `json:"quote"`
 
 	Log struct {
 		PCRs   []attest.PCR   `json:"pcrs"`

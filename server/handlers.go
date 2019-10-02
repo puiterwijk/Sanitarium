@@ -9,9 +9,13 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/google/go-attestation/attest"
+
 	jose "github.com/square/go-jose/v3"
 	"github.com/square/go-jose/v3/jwt"
 
+	"github.com/puiterwijk/dendraeck/server/internal"
+	"github.com/puiterwijk/dendraeck/shared/security"
 	"github.com/puiterwijk/dendraeck/shared/types"
 )
 
@@ -30,28 +34,39 @@ var (
 			RequiredScopes: []string{"openid"},
 		},
 		Requirements: types.ServiceInfoRequirements{
-			AIK:          true,
+			TPM:          true,
 			Measurements: false,
 		},
 	}
-	tokenInfoURL = "https://www.googleapis.com/oauth2/v3/tokeninfo"
-	usedClaim    = "sub"
+	tokenInfoURL                 = "https://www.googleapis.com/oauth2/v3/tokeninfo"
+	usedClaim                    = "sub"
+	intermediateValidityDuration = "8h"
+	intermediateSigningSecret    = "foo"
+	certValidityDuration         = "10m"
+)
 
+var (
 	intermediateSigner   jose.Signer
 	intermediateValidity time.Duration
+	certValidity         time.Duration
 )
 
 func init() {
 	var err error
-	intermediateValidity, err = time.ParseDuration("8h")
+	intermediateValidity, err = time.ParseDuration(intermediateValidityDuration)
 	if err != nil {
 		panic(fmt.Errorf("Error parsing intermediate validity: %s", err))
+	}
+
+	certValidity, err = time.ParseDuration(certValidityDuration)
+	if err != nil {
+		panic(fmt.Errorf("Error parsing cert validity: %s", err))
 	}
 
 	intermediateSigner, err = jose.NewSigner(
 		jose.SigningKey{
 			Algorithm: jose.HS256,
-			Key:       []byte("foo"),
+			Key:       []byte(intermediateSigningSecret),
 		},
 		(&jose.SignerOptions{}).WithType("JWT"),
 	)
@@ -87,6 +102,10 @@ func returnAPISuccess(w http.ResponseWriter, response interface{}) {
 
 type intermediateCertInfo struct {
 	Username string `json:"username"`
+
+	TPMVersion  attest.TPMVersion            `json:"tpmversion"`
+	EKPublicKey []byte                       `json:"ekpubkey"`
+	AIK         attest.AttestationParameters `json:"aik"`
 }
 
 func handleIntermediateCertAuth(ctx context.Context, authzcode string) (string, error) {
@@ -110,7 +129,19 @@ func handleIntermediateCertRequest(ctx context.Context, req types.IntermediateCe
 	}
 	out.Username = subj
 
-	// TODO: Perform TPM verification dance
+	ekpubkey, err := internal.ValidateAttestation(
+		&serviceinfo,
+		security.CalculateNonce(req.AuthorizationCode),
+		&req.Attestation,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("Error during validation of TPM assertion: %s", err)
+	}
+	if serviceinfo.Requirements.TPM {
+		out.TPMVersion = req.Attestation.Static.TPMVersion
+		out.EKPublicKey = ekpubkey
+		out.AIK = req.Attestation.AIK
+	}
 
 	return &out, nil
 }
