@@ -9,7 +9,7 @@ require (
 	github.com/google/go-tpm v0.2.0
 	github.com/pquerna/cachecontrol v0.0.0-20180517163645-1555304b9b35 // indirect
 	github.com/square/go-jose/v3 v3.0.0-20190919032641-a5f6a9478937
-	golang.org/x/crypto v0.0.0-20191001170739-f9e2070545dc // indirect
+	golang.org/x/crypto v0.0.0-20191001170739-f9e2070545dc
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
-	gopkg.in/square/go-jose.v2 v2.3.1 // indirect
+	gopkg.in/square/go-jose.v2 v2.3.1
 )

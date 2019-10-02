@@ -3,10 +3,13 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 
 	jose "github.com/square/go-jose/v3"
+	"golang.org/x/crypto/ssh"
 
 	"github.com/puiterwijk/dendraeck/shared/types"
 )
@@ -35,12 +38,14 @@ var (
 	intermediateValidityDuration = "8h"
 	intermediateSigningSecret    = "foo"
 	certValidityDuration         = "10m"
+	sshSignerPath                = "signerkey.pem"
 )
 
 var (
 	intermediateSigner   jose.Signer
 	intermediateValidity time.Duration
 	certValidity         time.Duration
+	sshSigner            ssh.Signer
 )
 
 func init() {
@@ -65,6 +70,17 @@ func init() {
 	if err != nil {
 		panic(fmt.Errorf("Error creating signer: %s", err))
 	}
+
+	privkey, err := ioutil.ReadFile(sshSignerPath)
+	if err != nil {
+		panic(fmt.Errorf("Error reading private SSH key: %s", err))
+	}
+	sshSigner, err = ssh.ParsePrivateKey(privkey)
+	if err != nil {
+		panic(fmt.Errorf("Error parsing private SSH key: %s", err))
+	}
+
+	serviceinfo.SSHPubKey = strings.Replace(string(ssh.MarshalAuthorizedKey(sshSigner.PublicKey())), "\n", "", -1)
 }
 
 func serviceInfoHandler(w http.ResponseWriter, r *http.Request) {

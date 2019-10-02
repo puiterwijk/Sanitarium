@@ -21,7 +21,8 @@ var (
 
 const (
 	// TODO: Get from somewhere
-	serverRoot = "http://localhost:8080"
+	serverRoot    = "http://localhost:8080"
+	sshServerName = "todo"
 )
 
 func main() {
@@ -38,12 +39,17 @@ func executeSSH(cert, key string) {
 
 func getSSHCertAndKeyFromIntermediate(cache *int_cache.Cache, svc *service.Service) (string, string, error) {
 	fmt.Println("Getting SSH cert and key with intermediate cert")
+
+	err := svc.RetrieveSSHCertificate(sshServerName)
+	if err != nil {
+		log.Fatalf("Error retrieving SSH certificate with intermediate: %s", err)
+	}
 	return "", "", nil
 }
 
 func getSSHCertAndKey(cache *int_cache.Cache) (string, string) {
 	// First: Check whether we already have an SSH cert
-	cert, key, err := cache.GetTemporarySSHCert()
+	cert, key, err := cache.GetSSHCert(sshServerName)
 	if err == nil {
 		return cert, key
 	} else if !os.IsNotExist(err) {

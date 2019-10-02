@@ -4,7 +4,11 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -12,6 +16,7 @@ import (
 	"strings"
 
 	oidc "github.com/coreos/go-oidc"
+	"golang.org/x/crypto/ssh"
 	"golang.org/x/oauth2"
 
 	int_cache "github.com/puiterwijk/dendraeck/client/internal/cache"
@@ -133,4 +138,43 @@ func (s *Service) RetrieveIntermediateCertificate(authzcode string, attestation 
 	}
 
 	return s.cache.SaveIntermediateCertificate(response.IntermediateCertificate)
+}
+
+func (s *Service) RetrieveSSHCertificate(servername string) error {
+	intcert, err := s.cache.GetIntermediateCertificate()
+	if err != nil {
+		return fmt.Errorf("Error while retrieving intermediate cert: %s", intcert)
+	}
+
+	rsakey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return fmt.Errorf("Error generating new private key: %s", err)
+	}
+	privkey := pem.EncodeToMemory(&pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: x509.MarshalPKCS1PrivateKey(rsakey),
+	})
+	pubsshkey, err := ssh.NewPublicKey(rsakey.Public())
+	if err != nil {
+		return fmt.Errorf("Error generating SSH public key: %s", err)
+	}
+
+	var (
+		request  types.SSHCertRequest
+		response types.SSHCertResponse
+	)
+	request.IntermediateCert = intcert
+	request.PublicKey = pubsshkey.Marshal()
+	request.Servername = servername
+
+	if err := s.performRequest("/cert/ssh", request, &response); err != nil {
+		return err
+	}
+
+	if response.Certificate.AIKCrypted {
+		// TODO: Decrypt with AIK
+		return fmt.Errorf("AIK decryption not implemented")
+	}
+
+	return s.cache.SaveSSHCert(servername, privkey, response.Certificate.Contents)
 }

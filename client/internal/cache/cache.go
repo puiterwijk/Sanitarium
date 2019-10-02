@@ -66,9 +66,13 @@ func (c *Cache) Close() {
 	}
 }
 
-func (c *Cache) GetTemporarySSHCert() (string, string, error) {
-	certpath := path.Join(c.dir, "sshcert.pem")
-	keypath := path.Join(c.dir, "sshkey.pem")
+func (c *Cache) validateSSHCert(certcontents []byte) error {
+	return fmt.Errorf("validateSSHCert not implemented")
+}
+
+func (c *Cache) GetSSHCert(servername string) (string, string, error) {
+	certpath := path.Join(c.dir, servername+".sshcert.pem")
+	keypath := path.Join(c.dir, servername+".sshkey.pem")
 
 	cert, err := ioutil.ReadFile(certpath)
 	if err != nil {
@@ -77,9 +81,24 @@ func (c *Cache) GetTemporarySSHCert() (string, string, error) {
 	if _, err := os.Stat(keypath); err != nil {
 		return "", "", err
 	}
-	// TODO: Check whether certificate is still valid
-	_ = cert
+	err = c.validateSSHCert(cert)
+	if err != nil {
+		return "", "", err
+	}
 	return certpath, keypath, nil
+}
+
+func (c *Cache) SaveSSHCert(servername string, privkey, pubcert []byte) error {
+	certpath := path.Join(c.dir, servername+".sshcert.pem")
+	keypath := path.Join(c.dir, servername+".sshkey.pem")
+
+	if err := ioutil.WriteFile(certpath, pubcert, 0600); err != nil {
+		return err
+	}
+	if err := ioutil.WriteFile(keypath, privkey, 0600); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (c *Cache) validateIntermediateCertificate(rawtoken string) error {

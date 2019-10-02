@@ -13,3 +13,5 @@
 
 /server/server
 /client/client
+
+/server/signerkey.pem*

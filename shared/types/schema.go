@@ -21,6 +21,7 @@ type ServiceInfoRequirements struct {
 
 type ServiceInfo struct {
 	Root         string                  `json:"root"`
+	SSHPubKey    string                  `json:"sshpubkey"`
 	OIDC         ServiceInfoOIDC         `json:"oidc"`
 	Requirements ServiceInfoRequirements `json:"requirements"`
 }
@@ -58,6 +59,19 @@ type IntermediateCertificateResponse struct {
 }
 
 type SSHCertRequest struct {
-	Servername       string `json:"servername"`
 	IntermediateCert string `json:"intermediatecert"`
+	PublicKey        []byte `json:"publickey"`
+
+	Servername string `json:"servername"`
+}
+
+type SSHCertResponse struct {
+	Restrictions struct {
+		Servername string `json:"servername"`
+	} `json:"restrictions"`
+
+	Certificate struct {
+		Contents   []byte `json:"contents"`
+		AIKCrypted bool   `json:"aikcrypted"`
+	} `json:"certificate"`
 }

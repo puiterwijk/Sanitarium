@@ -89,6 +89,7 @@ func intermediateCertHandler(w http.ResponseWriter, r *http.Request) {
 		Expiry:    jwt.NewNumericDate(time.Now().Add(intermediateValidity)),
 	}
 
+	log.Println("Signing intermediate certificate for", resp.Username)
 	signed, err := jwt.
 		Signed(intermediateSigner).
 		Claims(cl).
