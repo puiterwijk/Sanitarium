@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
+	"strings"
+	"syscall"
 
 	oidc "github.com/coreos/go-oidc"
 
@@ -15,17 +18,25 @@ import (
 )
 
 var (
-	provider oidc.Provider
-	cache    *int_cache.Cache
+	provider      oidc.Provider
+	cache         *int_cache.Cache
+	sshServerName string
 )
 
 const (
 	// TODO: Get from somewhere
-	serverRoot    = "http://localhost:8080"
-	sshServerName = "todo"
+	serverRoot = "http://localhost:8080"
 )
 
 func main() {
+	if len(os.Args) < 2 {
+		log.Fatalf("No hostname provided?")
+	}
+	if strings.HasPrefix(os.Args[1], "-") {
+		log.Fatalf("Please use hostname as first argument (fixing this is TODO)")
+	}
+	sshServerName = os.Args[1]
+
 	cache = int_cache.New(serverRoot)
 	defer cache.Close()
 
@@ -34,7 +45,24 @@ func main() {
 }
 
 func executeSSH(cert, key string) {
-	fmt.Println("Executing SSH with cert", cert, "key", key)
+	cmd, err := exec.LookPath("ssh")
+	if err != nil {
+		log.Fatalf("Unable to find SSH: %s", err)
+	}
+	args := []string{
+		"ssh",
+		"-i",
+		key,
+	}
+	args = append(args, os.Args[1:]...)
+
+	fmt.Printf("Going to execute %s with args: %s\n", cmd, args)
+
+	syscall.Exec(
+		cmd,
+		args,
+		os.Environ(),
+	)
 }
 
 func getSSHCertAndKeyFromIntermediate(cache *int_cache.Cache, svc *service.Service) (string, string, error) {

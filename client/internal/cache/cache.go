@@ -100,8 +100,8 @@ func (c *Cache) validateSSHCert(certcontents []byte) error {
 }
 
 func (c *Cache) GetSSHCert(servername string) (string, string, error) {
-	certpath := path.Join(c.dir, servername+".sshcert.pem")
-	keypath := path.Join(c.dir, servername+".sshkey.pem")
+	certpath := path.Join(c.dir, servername+".sshkey-cert.pub")
+	keypath := path.Join(c.dir, servername+".sshkey")
 
 	cert, err := ioutil.ReadFile(certpath)
 	if err != nil {
@@ -121,8 +121,8 @@ func (c *Cache) SaveSSHCert(servername string, privkey, pubcert []byte) error {
 	if err := c.validateSSHCert(pubcert); err != nil {
 		return fmt.Errorf("Error validating ssh cert before saving: %s", err)
 	}
-	certpath := path.Join(c.dir, servername+".sshcert.pem")
-	keypath := path.Join(c.dir, servername+".sshkey.pem")
+	certpath := path.Join(c.dir, servername+".sshkey-cert.pub")
+	keypath := path.Join(c.dir, servername+".sshkey")
 
 	if err := ioutil.WriteFile(certpath, pubcert, 0600); err != nil {
 		return err
