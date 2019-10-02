@@ -152,7 +152,12 @@ func (c *Cache) validateIntermediateCertificate(rawtoken string) (string, error)
 	}
 
 	var claims jwt.Claims
-	err = token.Claims(c.intermediatepubkey, &claims)
+	if c.intermediatepubkey == nil {
+		// If we didn't get the pubkey yet, we have no way to verify signature
+		err = token.UnsafeClaimsWithoutVerification(&claims)
+	} else {
+		err = token.Claims(c.intermediatepubkey, &claims)
+	}
 	if err != nil {
 		return "", fmt.Errorf("Error parsing intermediate certificate: %s", err)
 	}
