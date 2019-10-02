@@ -23,19 +23,54 @@ var (
 	sshServerName string
 )
 
-const (
+var (
 	// TODO: Get from somewhere
-	serverRoot = "http://localhost:8080"
+	serverRoot        = os.Getenv("DD_SERVER_ROOT")
+	defaultServerRoot = "https://server-dendraeck.e4ff.pro-eu-west-1.openshiftapps.com/"
 )
 
+func determineHostname() string {
+	var inArg bool
+
+	for _, arg := range os.Args[1:] {
+		if inArg {
+			inArg = false
+			continue
+		}
+		if strings.HasPrefix(arg, "--") {
+			inArg = true
+			continue
+		}
+		if strings.HasPrefix(arg, "-") {
+			continue
+		}
+
+		split := strings.Split(arg, "@")
+		if len(split) == 1 {
+			return split[0]
+		} else if len(split) == 2 {
+			return split[1]
+		} else {
+			fmt.Println("Error parsing possible hostname: ", arg)
+		}
+	}
+	return ""
+}
+
 func main() {
+	if serverRoot == "" {
+		serverRoot = defaultServerRoot
+	}
+
 	if len(os.Args) < 2 {
-		log.Fatalf("No hostname provided?")
+		log.Fatalf("No hostname provided")
 	}
-	if strings.HasPrefix(os.Args[1], "-") {
-		log.Fatalf("Please use hostname as first argument (fixing this is TODO)")
+	sshServerName = determineHostname()
+	fmt.Println("Hostname: ", sshServerName)
+	return
+	if sshServerName == "" {
+		log.Fatalf("No hostname detected")
 	}
-	sshServerName = os.Args[1]
 
 	cache = int_cache.New(serverRoot)
 	defer cache.Close()
