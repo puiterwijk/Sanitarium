@@ -11,7 +11,7 @@ type ServiceInfoOIDC struct {
 	ProviderRoot   string   `json:"providerroot"`
 	SupportsOOB    bool     `json:"supportsoob"`
 	ClientID       string   `json:"clientid"`
-	ClientSecret   string   `json:"clientsecret"`
+	ClientSecret   string   `json:"-"`
 	RequiredScopes []string `json:"requiredscopes"`
 }
 
