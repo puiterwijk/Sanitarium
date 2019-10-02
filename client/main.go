@@ -52,7 +52,7 @@ func executeSSH(cert, key string) {
 	args := []string{
 		"ssh",
 		"-i",
-		cert,
+		key,
 	}
 	args = append(args, os.Args[1:]...)
 

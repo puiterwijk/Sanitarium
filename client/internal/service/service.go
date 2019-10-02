@@ -155,9 +155,13 @@ func (s *Service) RetrieveSSHCertificate(servername string) error {
 	if err != nil {
 		return fmt.Errorf("Error generating new private key: %s", err)
 	}
+	keybytes, err := x509.MarshalPKCS8PrivateKey(rsakey)
+	if err != nil {
+		return fmt.Errorf("Error marshalling key to PKCS8: %s", err)
+	}
 	privkey := pem.EncodeToMemory(&pem.Block{
-		Type:  "RSA PRIVATE KEY",
-		Bytes: x509.MarshalPKCS1PrivateKey(rsakey),
+		Type:  "PRIVATE KEY",
+		Bytes: keybytes,
 	})
 	pubsshkey, err := ssh.NewPublicKey(rsakey.Public())
 	if err != nil {
