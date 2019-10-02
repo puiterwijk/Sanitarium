@@ -87,7 +87,7 @@ func (s *Service) RequiresMeasurement() bool {
 }
 
 func (s *Service) GetAuthorizationCode() (string, error) {
-	fmt.Println("Please visit ", s.oauth2config.AuthCodeURL("nostate"))
+	fmt.Fprintln(os.Stderr, "Please visit ", s.oauth2config.AuthCodeURL("nostate"))
 	// TODO: Maybe accept local url
 	return s.acceptManualAuthzCode()
 }
