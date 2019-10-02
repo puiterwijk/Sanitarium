@@ -25,9 +25,6 @@ type intermediateCertInfo struct {
 }
 
 func handleIntermediateCertAuth(ctx context.Context, authzcode string) (string, error) {
-	// TODO: Remove this shortcut
-	return "puiterwijk", nil
-
 	subj, err := exchangeAuthzCode(ctx, authzcode)
 	if err != nil {
 		log.Printf("Error exchanging authz code: %s", err)
