@@ -57,7 +57,7 @@ func generateSSHCert(request *types.SSHCertRequest, sub string) ([]byte, error) 
 	cert.ValidBefore = uint64(time.Now().Add(certValidity).Unix())
 	cert.ValidPrincipals = []string{sub}
 
-	// TODO: Fill cert
+	// TODO: Fill cert with extra attributes
 
 	err = cert.SignCert(rand.Reader, sshSigner)
 	if err != nil {
