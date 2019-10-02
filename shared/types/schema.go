@@ -71,7 +71,12 @@ type SSHCertResponse struct {
 	} `json:"restrictions"`
 
 	Certificate struct {
-		Contents   []byte `json:"contents"`
-		AIKCrypted bool   `json:"aikcrypted"`
+		IsCrypted       bool   `json:"crypted"`
+		Contents        []byte `json:"contents"`
+		CryptedContents struct {
+			Contents            []byte                      `json:"contents"`
+			Nonce               []byte                      `json:"nonce"`
+			EncryptedCredential *attest.EncryptedCredential `json:"encrypted"`
+		} `json:"cryptedcontents"`
 	} `json:"certificate"`
 }
