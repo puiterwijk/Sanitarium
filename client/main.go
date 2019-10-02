@@ -50,11 +50,13 @@ func getSSHCertAndKey(cache *int_cache.Cache) (string, string) {
 		log.Fatalf("Error while checking cache for temp key: %s", err)
 	}
 
+	// We have no SSH cert, initiate service
 	svc, err := service.GetService(context.Background(), cache, serverRoot)
 	if err != nil {
 		log.Fatalf("Error getting service info: %s", err)
 	}
 
+	// Second: Check if we have an intermediate certificate
 	_, err = cache.GetIntermediateCertificate()
 	if err == nil {
 		// We have a usable intermediate
@@ -68,6 +70,7 @@ func getSSHCertAndKey(cache *int_cache.Cache) (string, string) {
 		fmt.Println("No valid intermediate cert:", err)
 	}
 
+	// Last: Get a new intermediate certificate
 	authzcode, err := svc.GetAuthorizationCode()
 	if err != nil {
 		log.Fatalf("Error getting authorization code: %s", err)
