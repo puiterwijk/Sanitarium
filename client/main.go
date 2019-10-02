@@ -51,7 +51,7 @@ func determineHostname() string {
 		} else if len(split) == 2 {
 			return split[1]
 		} else {
-			fmt.Println("Error parsing possible hostname: ", arg)
+			log.Fatalf("Error parsing possible hostname: ", arg)
 		}
 	}
 	return ""
@@ -97,7 +97,7 @@ func executeSSH(cert, key string) {
 }
 
 func getSSHCertAndKeyFromIntermediate(cache *int_cache.Cache, svc *service.Service) (string, string, error) {
-	fmt.Println("Getting SSH cert and key with intermediate cert")
+	fmt.Fprintln(os.Stderr, "Getting SSH cert and key with intermediate cert")
 
 	err := svc.RetrieveSSHCertificate(sshServerName)
 	if err != nil {
@@ -127,10 +127,10 @@ func getSSHCertAndKey(cache *int_cache.Cache) (string, string) {
 		if err == nil {
 			return cert, key
 		}
-		fmt.Println("Error using existing intermediate cert: ", err, " (Getting new one)")
+		fmt.Fprintln(os.Stderr, "Error using existing intermediate cert: ", err, " (Getting new one)")
 	}
 	if !os.IsNotExist(err) {
-		fmt.Println("No valid intermediate cert:", err)
+		fmt.Fprintln(os.Stderr, "No valid intermediate cert:", err)
 	}
 
 	// Last: Get a new intermediate certificate
