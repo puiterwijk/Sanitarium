@@ -82,7 +82,7 @@ func (c *Cache) GetTemporarySSHCert() (string, string, error) {
 	return certpath, keypath, nil
 }
 
-func (c *Cache) validateIntermediateCertificate(rawtoken, serverroot string) error {
+func (c *Cache) validateIntermediateCertificate(rawtoken string) error {
 	// Validate that this is an intermediate cert by the correct service, and still valid
 	token, err := jwt.ParseSigned(rawtoken)
 	if err != nil {
@@ -95,7 +95,7 @@ func (c *Cache) validateIntermediateCertificate(rawtoken, serverroot string) err
 		return fmt.Errorf("Error parsing intermediate certificate: %s", err)
 	}
 	err = claims.Validate(jwt.Expected{
-		Issuer: serverroot,
+		Issuer: c.serverroot,
 	})
 	if err != nil {
 		return fmt.Errorf("Error with the intermediate certificate: %s", err)
@@ -103,8 +103,8 @@ func (c *Cache) validateIntermediateCertificate(rawtoken, serverroot string) err
 	return nil
 }
 
-func (c *Cache) SaveIntermediateCertificate(rawtoken, serverroot string) error {
-	if err := c.validateIntermediateCertificate(rawtoken, serverroot); err != nil {
+func (c *Cache) SaveIntermediateCertificate(rawtoken string) error {
+	if err := c.validateIntermediateCertificate(rawtoken); err != nil {
 		return fmt.Errorf("Error validating intermediate certificate for storage: %s", err)
 	}
 
@@ -112,7 +112,7 @@ func (c *Cache) SaveIntermediateCertificate(rawtoken, serverroot string) error {
 	return ioutil.WriteFile(intcertpath, []byte(rawtoken), 0600)
 }
 
-func (c *Cache) GetIntermediateCertificate(serverroot string) (string, error) {
+func (c *Cache) GetIntermediateCertificate() (string, error) {
 	intcertpath := path.Join(c.dir, "intermediatecert.jwt")
 	cert, err := ioutil.ReadFile(intcertpath)
 	if err != nil {
@@ -120,7 +120,7 @@ func (c *Cache) GetIntermediateCertificate(serverroot string) (string, error) {
 	}
 
 	rawtoken := string(cert)
-	err = c.validateIntermediateCertificate(rawtoken, serverroot)
+	err = c.validateIntermediateCertificate(rawtoken)
 	if err != nil {
 		return "", fmt.Errorf("Error validating intermediate certificate: %s", err)
 	}

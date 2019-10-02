@@ -55,7 +55,7 @@ func getSSHCertAndKey(cache *int_cache.Cache) (string, string) {
 		log.Fatalf("Error getting service info: %s", err)
 	}
 
-	_, err = cache.GetIntermediateCertificate(svc.GetServerRoot())
+	_, err = cache.GetIntermediateCertificate()
 	if err == nil {
 		// We have a usable intermediate
 		cert, key, err := getSSHCertAndKeyFromIntermediate(cache, svc)

@@ -132,5 +132,5 @@ func (s *Service) RetrieveIntermediateCertificate(authzcode string, attestation 
 		return err
 	}
 
-	return s.cache.SaveIntermediateCertificate(response, s.info.Root)
+	return s.cache.SaveIntermediateCertificate(response)
 }
