@@ -1,0 +1,13 @@
+FROM fedora:30
+RUN yum install -y golang git trousers-devel
+COPY . /home
+WORKDIR /home/server
+RUN go build
+
+FROM registry.access.redhat.com/ubi8/ubi-minimal
+RUN microdnf install trousers-lib
+COPY server/OptigaRsaMfrCA035.crt /OptigaRsaMfrCA035.crt
+COPY --from=0 /home/server/server /bin/server
+EXPOSE 8080
+USER 1000
+CMD ["/bin/server"]

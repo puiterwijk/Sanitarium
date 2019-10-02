@@ -9,6 +9,7 @@ import (
 
 func registerHandlers() {
 	http.HandleFunc("/", homeHandler)
+	http.HandleFunc("/token", tokenReturnHandler)
 	http.HandleFunc("/info", serviceInfoHandler)
 	http.HandleFunc("/cert/intermediate", intermediateCertHandler)
 	http.HandleFunc("/cert/ssh", sshCertHandler)

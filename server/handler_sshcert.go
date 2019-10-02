@@ -52,12 +52,17 @@ func generateSSHCert(request *types.SSHCertRequest, sub string) ([]byte, error) 
 	}
 
 	cert := new(ssh.Certificate)
+	cert.CertType = ssh.UserCert
+	cert.Extensions = make(map[string]string)
 	cert.Key = pubkey
 	cert.ValidAfter = uint64(time.Now().Unix())
 	cert.ValidBefore = uint64(time.Now().Add(certValidity).Unix())
 	cert.ValidPrincipals = []string{sub}
 
 	// TODO: Fill cert with extra attributes
+	if addGitHubOption {
+		cert.Extensions["login@github.com"] = sub
+	}
 
 	err = cert.SignCert(rand.Reader, sshSigner)
 	if err != nil {

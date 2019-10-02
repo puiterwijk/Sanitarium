@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -28,8 +27,7 @@ type intermediateCertInfo struct {
 func handleIntermediateCertAuth(ctx context.Context, authzcode string) (string, error) {
 	subj, err := exchangeAuthzCode(ctx, authzcode)
 	if err != nil {
-		log.Printf("Error exchanging authz code: %s", err)
-		return "", errors.New("Error with authorization code")
+		return "", fmt.Errorf("Error with authorization code: %s", err)
 	}
 	return subj, nil
 }

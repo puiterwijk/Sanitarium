@@ -9,6 +9,7 @@ import (
 
 type ServiceInfoOIDC struct {
 	ProviderRoot   string   `json:"providerroot"`
+	SupportsOOB    bool     `json:"supportsoob"`
 	ClientID       string   `json:"clientid"`
 	ClientSecret   string   `json:"clientsecret"`
 	RequiredScopes []string `json:"requiredscopes"`

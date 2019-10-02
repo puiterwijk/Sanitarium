@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -21,24 +22,30 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 var (
 	// TODO: Configurable
 	serviceinfo = types.ServiceInfo{
-		Root: "http://localhost:8080",
+		Root: "https://server-dendraeck.e4ff.pro-eu-west-1.openshiftapps.com",
 		OIDC: types.ServiceInfoOIDC{
-			ProviderRoot:   "https://accounts.google.com",
-			ClientID:       "764142782493-lclqihkqp60ru43plumj5vpi81opcluo.apps.googleusercontent.com",
-			ClientSecret:   "i-NLsLi0qCKT7oSrOpntwiYh",
-			RequiredScopes: []string{"openid"},
+			//ProviderRoot:   "https://accounts.google.com",
+			//ClientID:       "764142782493-lclqihkqp60ru43plumj5vpi81opcluo.apps.googleusercontent.com",
+			//ClientSecret:   "i-NLsLi0qCKT7oSrOpntwiYh",
+			ProviderRoot:   "https://iddev.fedorainfracloud.org/openidc/",
+			ClientID:       "sshcerttest",
+			ClientSecret:   "AAL37W2nbPTLuHdniCNJFlksyXW1yaoK",
+			SupportsOOB:    false,
+			RequiredScopes: []string{"openid", "profile"},
 		},
 		Requirements: types.ServiceInfoRequirements{
 			TPM:          true,
 			Measurements: false,
 		},
 	}
-	tokenInfoURL                 = "https://www.googleapis.com/oauth2/v3/tokeninfo"
+	//tokenInfoURL                 = "https://www.googleapis.com/oauth2/v3/tokeninfo"
+	tokenInfoURL                 = "https://iddev.fedorainfracloud.org/openidc/TokenInfo"
 	usedClaim                    = "sub"
 	intermediateValidityDuration = "8h"
 	intermediateSigningSecret    = "foo"
 	certValidityDuration         = "10m"
-	sshSignerPath                = "signerkey.pem"
+	sshSignerPath                = os.Getenv("SIGNER_KEY_PATH")
+	addGitHubOption              = true
 )
 
 var (
@@ -85,4 +92,8 @@ func init() {
 
 func serviceInfoHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(serviceinfo)
+}
+
+func tokenReturnHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, `Hi. Please copy this token to your client: %s`, r.URL.Query().Get("code"))
 }

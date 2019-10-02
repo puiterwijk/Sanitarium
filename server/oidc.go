@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 
 	oidc "github.com/coreos/go-oidc"
@@ -31,6 +32,9 @@ func init() {
 		Scopes:       serviceinfo.OIDC.RequiredScopes,
 		// TODO: Maybe accept local URL
 		RedirectURL: "urn:ietf:wg:oauth:2.0:oob",
+	}
+	if !serviceinfo.OIDC.SupportsOOB {
+		oauth2config.RedirectURL = serviceinfo.Root + "/token"
 	}
 	verifier = oidcProvider.Verifier(&oidc.Config{
 		ClientID: serviceinfo.OIDC.ClientID,
@@ -63,16 +67,23 @@ func setMin(required, provided []string) []string {
 }
 
 func checkTokenScopes(ctx context.Context, accesstoken string) error {
-	url := tokenInfoURL + "?access_token=" + accesstoken
-	resp, err := http.Get(url)
+	resp, err := http.PostForm(
+		tokenInfoURL,
+		url.Values{
+			"token":         {accesstoken},
+			"access_token":  {accesstoken},
+			"client_id":     {serviceinfo.OIDC.ClientID},
+			"client_secret": {serviceinfo.OIDC.ClientSecret},
+		},
+	)
 	if err != nil {
-		return err
+		return fmt.Errorf("Error retrieving token info: %s", err)
 	}
 	var info tokenInfo
 	err = json.NewDecoder(resp.Body).Decode(&info)
 	resp.Body.Close()
 	if err != nil {
-		return err
+		return fmt.Errorf("Error parsing token info: %s", err)
 	}
 
 	scopes := strings.Split(info.Scopes, " ")
@@ -105,9 +116,11 @@ func exchangeAuthzCode(ctx context.Context, authzcode string) (string, error) {
 		return "", err
 	}
 
-	err = idToken.VerifyAccessToken(oauth2token.AccessToken)
-	if err != nil {
-		return "", err
+	if idToken.AccessTokenHash != "" {
+		err = idToken.VerifyAccessToken(oauth2token.AccessToken)
+		if err != nil {
+			return "", err
+		}
 	}
 
 	var claims map[string]interface{}
