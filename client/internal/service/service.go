@@ -53,6 +53,7 @@ func GetService(ctx context.Context, cache *int_cache.Cache, serverroot string) 
 	if err != nil {
 		return nil, err
 	}
+	service.cache.SetIntermediatePublicKey(service.info.IntermediatePublicKey)
 	service.cache.SetSSHPublicKey(service.info.SSHPubKey)
 
 	service.provider, err = oidc.NewProvider(ctx, service.info.OIDC.ProviderRoot)

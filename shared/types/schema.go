@@ -21,10 +21,11 @@ type ServiceInfoRequirements struct {
 }
 
 type ServiceInfo struct {
-	Root         string                  `json:"root"`
-	SSHPubKey    string                  `json:"sshpubkey"`
-	OIDC         ServiceInfoOIDC         `json:"oidc"`
-	Requirements ServiceInfoRequirements `json:"requirements"`
+	Root                  string                  `json:"root"`
+	SSHPubKey             string                  `json:"sshpubkey"`
+	IntermediatePublicKey []byte                  `json:"intermediatepubkey"`
+	OIDC                  ServiceInfoOIDC         `json:"oidc"`
+	Requirements          ServiceInfoRequirements `json:"requirements"`
 }
 
 type APIResponse struct {

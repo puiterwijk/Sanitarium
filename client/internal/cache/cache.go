@@ -1,6 +1,8 @@
 package cache
 
 import (
+	"crypto/rsa"
+	"crypto/x509"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -49,10 +51,11 @@ func getCacheDir(serverroot string) string {
 }
 
 type Cache struct {
-	dir        string
-	serverroot string
-	tpm        *attest.TPM
-	sshpubkey  ssh.PublicKey
+	dir                string
+	serverroot         string
+	tpm                *attest.TPM
+	sshpubkey          ssh.PublicKey
+	intermediatepubkey *rsa.PublicKey
 }
 
 func New(serverroot string) *Cache {
@@ -74,6 +77,14 @@ func (c *Cache) SetSSHPublicKey(stringkey string) {
 		panic(fmt.Errorf("Error parsing server public SSH key: %s", err))
 	}
 	c.sshpubkey = pubkey
+}
+
+func (c *Cache) SetIntermediatePublicKey(pkcs1key []byte) {
+	var err error
+	c.intermediatepubkey, err = x509.ParsePKCS1PublicKey(pkcs1key)
+	if err != nil {
+		panic(fmt.Errorf("Error parsing server public intermediate key: %s", err))
+	}
 }
 
 func (c *Cache) validateSSHCert(certcontents []byte) error {
@@ -141,7 +152,7 @@ func (c *Cache) validateIntermediateCertificate(rawtoken string) (string, error)
 	}
 
 	var claims jwt.Claims
-	err = token.UnsafeClaimsWithoutVerification(&claims)
+	err = token.Claims(c.intermediatepubkey, &claims)
 	if err != nil {
 		return "", fmt.Errorf("Error parsing intermediate certificate: %s", err)
 	}

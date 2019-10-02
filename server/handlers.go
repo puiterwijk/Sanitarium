@@ -1,7 +1,10 @@
 package main
 
 import (
+	"crypto/rsa"
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -22,26 +25,34 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 
 var (
 	serviceinfo = types.ServiceInfo{
-		Root: os.Getenv("SERVICE_ROOT"),
+		Root: getEnvironReq("SERVICE_ROOT"),
 		OIDC: types.ServiceInfoOIDC{
-			ProviderRoot:   os.Getenv("OIDC_PROVIDER_ROOT"),
-			ClientID:       os.Getenv("OIDC_CLIENT_ID"),
+			ProviderRoot:   getEnvironReq("OIDC_PROVIDER_ROOT"),
+			ClientID:       getEnvironReq("OIDC_CLIENT_ID"),
 			ClientSecret:   os.Getenv("OIDC_CLIENT_SECRET"),
 			SupportsOOB:    getEnvironBool("OIDC_SUPPORTS_OOB", true),
-			RequiredScopes: strings.Split(os.Getenv("OIDC_REQUIRED_SCOPES"), ","),
+			RequiredScopes: strings.Split(getEnvironString("OIDC_REQUIRED_SCOPES", "openid"), ","),
 		},
 		Requirements: types.ServiceInfoRequirements{
 			TPM:          getEnvironBool("REQUIRE_TPM", true),
 			Measurements: getEnvironBool("REQUIRE_MEASUREMENT", false),
 		},
 	}
-	tokenInfoURL                 = os.Getenv("OIDC_TOKEN_INFO_URL")
+	tokenInfoURL                 = getEnvironReq("OIDC_TOKEN_INFO_URL")
 	usedClaim                    = getEnvironString("OIDC_USERNAME_CLAIM", "sub")
 	intermediateValidityDuration = getEnvironString("INTERMEDIATE_CERT_VALIDITY", "8h")
-	intermediateSigningSecret    = os.Getenv("INTERMEDIATE_SIGNING_SECRET")
+	intermediateSigningKeyPath   = getEnvironReq("INTERMEDIATE_SIGNING_KEY_PATH")
 	certValidityDuration         = getEnvironString("SSH_CERT_VALIDITY", "5m")
-	sshSignerPath                = os.Getenv("SSH_CERT_SIGNER_KEY_PATH")
+	sshSignerPath                = getEnvironReq("SSH_CERT_SIGNING_KEY_PATH")
 	addGitHubOption              = getEnvironBool("SSH_CERT_ADD_GITHUB", false)
+)
+
+var (
+	intermediatePublicKey *rsa.PublicKey
+	intermediateSigner    jose.Signer
+	intermediateValidity  time.Duration
+	certValidity          time.Duration
+	sshSigner             ssh.Signer
 )
 
 func getEnvironBool(envname string, def bool) bool {
@@ -78,12 +89,13 @@ func getEnvironString(envname string, def string) string {
 	return envval
 }
 
-var (
-	intermediateSigner   jose.Signer
-	intermediateValidity time.Duration
-	certValidity         time.Duration
-	sshSigner            ssh.Signer
-)
+func getEnvironReq(envname string) string {
+	envval := os.Getenv(envname)
+	if envval == "" {
+		panic(fmt.Errorf("Required configuration setting %s not set", envname))
+	}
+	return envval
+}
 
 func init() {
 	var err error
@@ -97,16 +109,39 @@ func init() {
 		panic(fmt.Errorf("Error parsing cert validity: %s", err))
 	}
 
+	intkey, err := ioutil.ReadFile(intermediateSigningKeyPath)
+	if err != nil {
+		panic(fmt.Errorf("Error reading intermediate signing key: %s", err))
+	}
+	block, rest := pem.Decode(intkey)
+	if len(rest) != 0 {
+		panic("More data found in intermediate signing key")
+	}
+	if block.Type != "RSA PRIVATE KEY" {
+		panic(fmt.Errorf("Unexpected key type found for intermediate key: %s", block.Type))
+	}
+	intermediateKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	if err != nil {
+		panic(fmt.Errorf("Unable to parse private intermediate key: %s", err))
+	}
+	intpubkey := intermediateKey.Public()
+	var ok bool
+	intermediatePublicKey, ok = intpubkey.(*rsa.PublicKey)
+	if !ok {
+		panic("Non-RSA public key?")
+	}
+
 	intermediateSigner, err = jose.NewSigner(
 		jose.SigningKey{
-			Algorithm: jose.HS256,
-			Key:       []byte(intermediateSigningSecret),
+			Algorithm: jose.PS256,
+			Key:       intermediateKey,
 		},
 		(&jose.SignerOptions{}).WithType("JWT"),
 	)
 	if err != nil {
 		panic(fmt.Errorf("Error creating signer: %s", err))
 	}
+	serviceinfo.IntermediatePublicKey = x509.MarshalPKCS1PublicKey(intermediatePublicKey)
 
 	privkey, err := ioutil.ReadFile(sshSignerPath)
 	if err != nil {

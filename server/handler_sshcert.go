@@ -29,7 +29,7 @@ func validateIntermediateCertificate(rawtoken string) (*intermediateCertInfo, er
 
 	var claims jwt.Claims
 	var intcertinfo intermediateCertInfo
-	err = token.Claims([]byte(intermediateSigningSecret), &claims, &intcertinfo)
+	err = token.Claims(intermediatePublicKey, &claims, &intcertinfo)
 	if err != nil {
 		return nil, fmt.Errorf("Error parsing intermediate certificate: %s", err)
 	}
