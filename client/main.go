@@ -56,8 +56,6 @@ func executeSSH(cert, key string) {
 	}
 	args = append(args, os.Args[1:]...)
 
-	fmt.Printf("Going to execute %s with args: %s\n", cmd, args)
-
 	syscall.Exec(
 		cmd,
 		args,
