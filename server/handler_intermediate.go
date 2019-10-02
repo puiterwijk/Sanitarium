@@ -10,10 +10,11 @@ import (
 	"time"
 
 	"github.com/google/go-attestation/attest"
+	"github.com/square/go-jose/v3/jwt"
+
 	"github.com/puiterwijk/dendraeck/server/internal"
 	"github.com/puiterwijk/dendraeck/shared/security"
 	"github.com/puiterwijk/dendraeck/shared/types"
-	"github.com/square/go-jose/v3/jwt"
 )
 
 type intermediateCertInfo struct {
@@ -99,5 +100,8 @@ func intermediateCertHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	returnAPISuccess(w, signed)
+	var certresp types.IntermediateCertificateResponse
+	certresp.IntermediateCertificate = signed
+
+	returnAPISuccess(w, certresp)
 }

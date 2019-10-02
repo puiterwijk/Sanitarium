@@ -11,6 +11,7 @@ func registerHandlers() {
 	http.HandleFunc("/", homeHandler)
 	http.HandleFunc("/info", serviceInfoHandler)
 	http.HandleFunc("/cert/intermediate", intermediateCertHandler)
+	http.HandleFunc("/cert/ssh", sshCertHandler)
 }
 
 func main() {

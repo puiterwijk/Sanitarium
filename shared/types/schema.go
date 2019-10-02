@@ -52,3 +52,12 @@ type IntermediateCertificateRequest struct {
 	AuthorizationCode string                                    `json:"authorizationcode"`
 	Attestation       IntermediateCertificateRequestAttestation `json:"attestation"`
 }
+
+type IntermediateCertificateResponse struct {
+	IntermediateCertificate string `json:"intermediatecert"`
+}
+
+type SSHCertRequest struct {
+	Servername       string `json:"servername"`
+	IntermediateCert string `json:"intermediatecert"`
+}

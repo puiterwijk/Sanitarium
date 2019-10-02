@@ -126,11 +126,11 @@ func (s *Service) RetrieveIntermediateCertificate(authzcode string, attestation 
 	request.AuthorizationCode = authzcode
 	request.Attestation = *attestation
 
-	var response string
+	var response types.IntermediateCertificateResponse
 
 	if err := s.performRequest("/cert/intermediate", request, &response); err != nil {
 		return err
 	}
 
-	return s.cache.SaveIntermediateCertificate(response)
+	return s.cache.SaveIntermediateCertificate(response.IntermediateCertificate)
 }
