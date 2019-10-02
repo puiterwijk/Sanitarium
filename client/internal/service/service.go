@@ -59,13 +59,17 @@ func GetService(ctx context.Context, cache *int_cache.Cache, serverroot string) 
 	if err != nil {
 		return nil, err
 	}
+	redirurl := "urn:ietf:wg:oauth:2.0:oob"
+	if !service.info.OIDC.SupportsOOB {
+		redirurl = service.info.Root + "/token"
+	}
 	service.oauth2config = oauth2.Config{
 		ClientID:     service.info.OIDC.ClientID,
 		ClientSecret: service.info.OIDC.ClientSecret,
 		Endpoint:     service.provider.Endpoint(),
 		Scopes:       service.info.OIDC.RequiredScopes,
 		// TODO: Maybe accept local URL
-		RedirectURL: "urn:ietf:wg:oauth:2.0:oob",
+		RedirectURL: redirurl,
 	}
 	return &service, nil
 }
