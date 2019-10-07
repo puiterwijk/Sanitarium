@@ -58,7 +58,7 @@ type cacheBase struct {
 
 func New(serverroot string) *Cache {
 	return &Cache{
-		cacheBase{
+		cacheBase: cacheBase{
 			serverroot: serverroot,
 			dir:        getCacheDir(serverroot),
 		},
