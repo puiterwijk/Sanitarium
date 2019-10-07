@@ -46,7 +46,7 @@ func CreateAttestation(cache *int_cache.Cache, nonce []byte, dotpm, domeasuremen
 	tpm := cache.GetTPM()
 
 	// Add static info
-	out.Static.TPMVersion = tpm.Version()
+	out.Static.TPMVersion = uint8(tpm.Version())
 	if out.Static.EKPem, err = rsaEKPEM(tpm); err != nil {
 		return nil, fmt.Errorf("Unable to get EKPEM: %s", err)
 	}
@@ -68,7 +68,8 @@ func CreateAttestation(cache *int_cache.Cache, nonce []byte, dotpm, domeasuremen
 	if err != nil {
 		return nil, fmt.Errorf("Unable to get quote: %s", err)
 	}
-	out.Quote = *q
+	out.Quote.Quote = q.Quote
+	out.Quote.Signature = q.Signature
 
 	// Add log
 	if out.Log.Raw, err = tpm.MeasurementLog(); err != nil {
@@ -76,8 +77,19 @@ func CreateAttestation(cache *int_cache.Cache, nonce []byte, dotpm, domeasuremen
 	}
 
 	// Add PCR values
-	if out.Log.PCRs, err = tpm.PCRs(attest.HashSHA256); err != nil {
+	var pcrs []attest.PCR
+	if pcrs, err = tpm.PCRs(attest.HashSHA256); err != nil {
 		return nil, fmt.Errorf("Unable to get PCR values: %s", err)
+	}
+	for _, pcr := range pcrs {
+		out.Log.PCRs = append(
+			out.Log.PCRs,
+			types.PCRVal{
+				Index:     pcr.Index,
+				Digest:    pcr.Digest,
+				DigestAlg: pcr.DigestAlg,
+			},
+		)
 	}
 
 	return &out, nil

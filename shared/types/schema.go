@@ -32,6 +32,12 @@ type APIResponse struct {
 	Response json.RawMessage `json:"response,omitempty"`
 }
 
+type PCRVal struct {
+	Index     int
+	Digest    []byte
+	DigestAlg crypto.Hash
+}
+
 type IntermediateCertificateRequestAttestation struct {
 	Static struct {
 		TPMVersion uint8  `json:"tpmversion"`
@@ -52,12 +58,8 @@ type IntermediateCertificateRequestAttestation struct {
 	} `json:"quote"`
 
 	Log struct {
-		PCRs []struct {
-			Index     int
-			Digest    []byte
-			DigestAlg crypto.Hash
-		} `json:"pcrs"`
-		Raw []byte `json:"raw"`
+		PCRs []PCRVal `json:"pcrs"`
+		Raw  []byte   `json:"raw"`
 	} `json:"log"`
 }
 

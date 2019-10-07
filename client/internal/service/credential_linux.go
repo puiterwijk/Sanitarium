@@ -7,16 +7,23 @@ import (
 	"crypto/cipher"
 	"fmt"
 
+	"github.com/puiterwijk/dendraeck/shared/types"
+
 	"github.com/google/go-attestation/attest"
 )
 
-func (s *Service) activateCredential(ec *attest.EncryptedCredential, nonce, encrypted []byte) ([]byte, error) {
+func (s *Service) activateCredential(ec *types.SSHCertResponseEncryptedCredential, nonce, encrypted []byte) ([]byte, error) {
 	aik, err := s.cache.GetAIK()
 	if err != nil {
 		return nil, fmt.Errorf("Unable to get AIK: %s", err)
 	}
 	defer s.cache.CloseAIK(aik)
-	secret, err := aik.ActivateCredential(s.cache.GetTPM(), *ec)
+
+	rawec := attest.EncryptedCredential{
+		Credential: ec.Credential,
+		Secret:     ec.Secret,
+	}
+	secret, err := aik.ActivateCredential(s.cache.GetTPM(), rawec)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to activate credential: %s", err)
 	}
