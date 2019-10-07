@@ -1,10 +1,8 @@
 package types
 
 import (
+	"crypto"
 	"encoding/json"
-
-	"github.com/google/go-attestation/attest"
-	"github.com/google/go-tpm/tpm2"
 )
 
 type ServiceInfoOIDC struct {
@@ -36,18 +34,30 @@ type APIResponse struct {
 
 type IntermediateCertificateRequestAttestation struct {
 	Static struct {
-		TPMVersion attest.TPMVersion `json:"tpmversion"`
-		EKPem      []byte            `json:"ekpem"`
+		TPMVersion uint8  `json:"tpmversion"`
+		EKPem      []byte `json:"ekpem"`
 	} `json:"static"`
 
-	AIK attest.AttestationParameters `json:"aik"`
+	AIK struct {
+		Public                  []byte
+		UseTCSDActivationFormat bool
+		CreateData              []byte
+		CreateAttestation       []byte
+		CreateSignature         []byte
+	} `json:"aik"`
 
-	Quote attest.Quote `json:"quote"`
+	Quote struct {
+		Quote     []byte
+		Signature []byte
+	} `json:"quote"`
 
 	Log struct {
-		PCRs   []attest.PCR   `json:"pcrs"`
-		PCRAlg tpm2.Algorithm `json:"algorithm"`
-		Raw    []byte         `json:"raw"`
+		PCRs []struct {
+			Index     int
+			Digest    []byte
+			DigestAlg crypto.Hash
+		} `json:"pcrs"`
+		Raw []byte `json:"raw"`
 	} `json:"log"`
 }
 
@@ -67,6 +77,11 @@ type SSHCertRequest struct {
 	Servername string `json:"servername"`
 }
 
+type SSHCertResponseEncryptedCredential struct {
+	Credential []byte
+	Secret     []byte
+}
+
 type SSHCertResponse struct {
 	Restrictions struct {
 		Servername string `json:"servername"`
@@ -76,9 +91,9 @@ type SSHCertResponse struct {
 		IsCrypted       bool   `json:"crypted"`
 		Contents        []byte `json:"contents"`
 		CryptedContents struct {
-			Contents            []byte                      `json:"contents"`
-			Nonce               []byte                      `json:"nonce"`
-			EncryptedCredential *attest.EncryptedCredential `json:"encrypted"`
+			Contents            []byte                              `json:"contents"`
+			Nonce               []byte                              `json:"nonce"`
+			EncryptedCredential *SSHCertResponseEncryptedCredential `json:"encrypted"`
 		} `json:"cryptedcontents"`
 	} `json:"certificate"`
 }

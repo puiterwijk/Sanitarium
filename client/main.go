@@ -27,6 +27,9 @@ var (
 	// TODO: Get from somewhere
 	serverRoot        = os.Getenv("DD_SERVER_ROOT")
 	defaultServerRoot = "https://server-dendraeck.e4ff.pro-eu-west-1.openshiftapps.com"
+
+	attemptTPM         = false
+	attemptMeasurement = false
 )
 
 func determineHostname() string {
@@ -143,8 +146,8 @@ func getSSHCertAndKey(cache *int_cache.Cache) (string, string) {
 	attestation, err := internal.CreateAttestation(
 		cache,
 		nonce,
-		svc.RequiresTPM(),
-		svc.RequiresMeasurement(),
+		attemptTPM,
+		attemptMeasurement,
 	)
 	if err != nil {
 		log.Fatalf("Error creating attestation: %s", err)

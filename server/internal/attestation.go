@@ -66,7 +66,7 @@ func ValidateAttestation(serviceinfo *types.ServiceInfo, nonce []byte, attestati
 	}
 
 	aik, err := attest.ParseAIKPublic(
-		attestation.Static.TPMVersion,
+		attest.TPMVersion(attestation.Static.TPMVersion),
 		attestation.AIK.Public,
 	)
 	if err != nil {
@@ -77,7 +77,24 @@ func ValidateAttestation(serviceinfo *types.ServiceInfo, nonce []byte, attestati
 		return ekpubkey, nil
 	}
 
-	if err := aik.Verify(attestation.Quote, attestation.Log.PCRs, nonce); err != nil {
+	q := attest.Quote{
+		Version:   attest.TPMVersion(attestation.Static.TPMVersion),
+		Quote:     attestation.Quote.Quote,
+		Signature: attestation.Quote.Signature,
+	}
+	pcrs := make([]attest.PCR, 0)
+	for _, pcr := range attestation.Log.PCRs {
+		pcrs = append(
+			pcrs,
+			attest.PCR{
+				Index:     pcr.Index,
+				Digest:    pcr.Digest,
+				DigestAlg: pcr.DigestAlg,
+			},
+		)
+	}
+
+	if err := aik.Verify(q, pcrs, nonce); err != nil {
 		return nil, fmt.Errorf("Error validating quote: %s", err)
 	}
 
@@ -86,7 +103,7 @@ func ValidateAttestation(serviceinfo *types.ServiceInfo, nonce []byte, attestati
 		return nil, fmt.Errorf("Error parsing event log: %s", err)
 	}
 	fmt.Println("PCRs:", attestation.Log.PCRs)
-	events, err := eventlog.Verify(attestation.Log.PCRs)
+	events, err := eventlog.Verify(pcrs)
 	if err != nil {
 		return nil, fmt.Errorf("Error verifying measurement log: %s", err)
 	}

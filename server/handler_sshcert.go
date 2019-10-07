@@ -128,7 +128,10 @@ func encryptSSHCert(intcert *intermediateCertInfo, certresp *types.SSHCertRespon
 		return fmt.Errorf("Error generating activation secret: %s", err)
 	}
 
-	certresp.Certificate.CryptedContents.EncryptedCredential = ec
+	certresp.Certificate.CryptedContents.EncryptedCredential = &types.SSHCertResponseEncryptedCredential{
+		Credential: ec.Credential,
+		Secret:     ec.Secret,
+	}
 
 	blockcipher, err := aes.NewCipher(secret)
 	if err != nil {

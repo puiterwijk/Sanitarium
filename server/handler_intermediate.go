@@ -50,7 +50,7 @@ func handleIntermediateCertRequest(ctx context.Context, req types.IntermediateCe
 		return nil, fmt.Errorf("Error during validation of TPM assertion: %s", err)
 	}
 	if serviceinfo.Requirements.TPM {
-		out.TPMVersion = req.Attestation.Static.TPMVersion
+		out.TPMVersion = attest.TPMVersion(req.Attestation.Static.TPMVersion)
 		out.EKPublicKey = ekpubkey
 		out.AIK = req.Attestation.AIK
 	}
