@@ -17,7 +17,7 @@ import (
 	"golang.org/x/crypto/ssh"
 	"gopkg.in/square/go-jose.v2/jwt"
 
-	"github.com/puiterwijk/dendraeck/shared/types"
+	"github.com/puiterwijk/sanitarium/shared/types"
 )
 
 func validateIntermediateCertificate(rawtoken string) (*intermediateCertInfo, error) {

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/puiterwijk/dendraeck/shared/types"
+	"github.com/puiterwijk/sanitarium/shared/types"
 )
 
 func returnAPIError(w http.ResponseWriter, errmsg string) {

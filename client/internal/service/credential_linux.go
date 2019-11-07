@@ -7,7 +7,7 @@ import (
 	"crypto/cipher"
 	"fmt"
 
-	"github.com/puiterwijk/dendraeck/shared/types"
+	"github.com/puiterwijk/sanitarium/shared/types"
 
 	"github.com/google/go-attestation/attest"
 )

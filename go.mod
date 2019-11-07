@@ -1,4 +1,4 @@
-module github.com/puiterwijk/dendraeck
+module github.com/puiterwijk/sanitarium
 
 go 1.12
 

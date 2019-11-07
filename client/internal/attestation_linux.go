@@ -10,8 +10,8 @@ import (
 	"github.com/google/certificate-transparency-go/x509"
 	"github.com/google/go-attestation/attest"
 
-	int_cache "github.com/puiterwijk/dendraeck/client/internal/cache"
-	"github.com/puiterwijk/dendraeck/shared/types"
+	int_cache "github.com/puiterwijk/sanitarium/client/internal/cache"
+	"github.com/puiterwijk/sanitarium/shared/types"
 )
 
 func rsaEKPEM(tpm *attest.TPM) ([]byte, error) {

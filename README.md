@@ -1,2 +1,2 @@
-# DenDraeck
+# Sanitarium
 SSH CA manager

@@ -5,7 +5,7 @@ package service
 import (
 	"fmt"
 
-	"github.com/puiterwijk/dendraeck/shared/types"
+	"github.com/puiterwijk/sanitarium/shared/types"
 )
 
 func (s *Service) activateCredential(ec *types.SSHCertResponseEncryptedCredential, nonce, encrypted []byte) ([]byte, error) {

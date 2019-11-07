@@ -16,7 +16,7 @@ import (
 	jose "github.com/square/go-jose/v3"
 	"golang.org/x/crypto/ssh"
 
-	"github.com/puiterwijk/dendraeck/shared/types"
+	"github.com/puiterwijk/sanitarium/shared/types"
 )
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {

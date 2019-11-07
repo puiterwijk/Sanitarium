@@ -10,7 +10,7 @@ import (
 	"github.com/google/certificate-transparency-go/x509"
 
 	"github.com/google/go-attestation/attest"
-	"github.com/puiterwijk/dendraeck/shared/types"
+	"github.com/puiterwijk/sanitarium/shared/types"
 )
 
 var (

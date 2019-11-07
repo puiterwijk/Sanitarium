@@ -5,8 +5,8 @@ package internal
 import (
 	"fmt"
 
-	int_cache "github.com/puiterwijk/dendraeck/client/internal/cache"
-	"github.com/puiterwijk/dendraeck/shared/types"
+	int_cache "github.com/puiterwijk/sanitarium/client/internal/cache"
+	"github.com/puiterwijk/sanitarium/shared/types"
 )
 
 func CreateAttestation(cache *int_cache.Cache, nonce []byte, dotpm, domeasurements bool) (*types.IntermediateCertificateRequestAttestation, error) {

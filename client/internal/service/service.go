@@ -19,8 +19,8 @@ import (
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/oauth2"
 
-	int_cache "github.com/puiterwijk/dendraeck/client/internal/cache"
-	"github.com/puiterwijk/dendraeck/shared/types"
+	int_cache "github.com/puiterwijk/sanitarium/client/internal/cache"
+	"github.com/puiterwijk/sanitarium/shared/types"
 )
 
 type Service struct {

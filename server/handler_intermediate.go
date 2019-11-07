@@ -11,9 +11,9 @@ import (
 	"github.com/google/go-attestation/attest"
 	"github.com/square/go-jose/v3/jwt"
 
-	"github.com/puiterwijk/dendraeck/server/internal"
-	"github.com/puiterwijk/dendraeck/shared/security"
-	"github.com/puiterwijk/dendraeck/shared/types"
+	"github.com/puiterwijk/sanitarium/server/internal"
+	"github.com/puiterwijk/sanitarium/shared/security"
+	"github.com/puiterwijk/sanitarium/shared/types"
 )
 
 type intermediateCertInfo struct {

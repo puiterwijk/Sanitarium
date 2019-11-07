@@ -11,10 +11,10 @@ import (
 
 	oidc "github.com/coreos/go-oidc"
 
-	"github.com/puiterwijk/dendraeck/client/internal"
-	int_cache "github.com/puiterwijk/dendraeck/client/internal/cache"
-	service "github.com/puiterwijk/dendraeck/client/internal/service"
-	"github.com/puiterwijk/dendraeck/shared/security"
+	"github.com/puiterwijk/sanitarium/client/internal"
+	int_cache "github.com/puiterwijk/sanitarium/client/internal/cache"
+	service "github.com/puiterwijk/sanitarium/client/internal/service"
+	"github.com/puiterwijk/sanitarium/shared/security"
 )
 
 var (
