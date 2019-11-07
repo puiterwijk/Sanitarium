@@ -1,4 +1,4 @@
-FROM fedora:30
+FROM fedora:latest
 RUN yum install -y golang git trousers-devel
 COPY . /home
 WORKDIR /home/server
