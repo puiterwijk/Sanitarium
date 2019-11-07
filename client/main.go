@@ -3,9 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
+	"os/user"
 	"strings"
 	"syscall"
 
@@ -24,8 +26,7 @@ var (
 )
 
 var (
-	// TODO: Get from somewhere
-	serverRoot        = os.Getenv("DD_SERVER_ROOT")
+	serverRoot        = os.Getenv("SERVER_ROOT")
 	defaultServerRoot = "https://server-dendraeck.e4ff.pro-eu-west-1.openshiftapps.com"
 
 	attemptTPM         = false
@@ -54,7 +55,32 @@ func determineHostname() string {
 		} else if len(split) == 2 {
 			return split[1]
 		} else {
-			log.Fatalf("Error parsing possible hostname: ", arg)
+			log.Fatalf("Error parsing possible hostname: %s", arg)
+		}
+	}
+	return ""
+}
+
+var cfgFileLocations = []string{"/etc/sanitarium-server.cfg", "~/.sanitarium-server.cfg"}
+
+func getServerFromCfgFile() string {
+	for _, loc := range cfgFileLocations {
+		if strings.Contains(loc, "~") {
+			user, err := user.Current()
+			if err != nil {
+				log.Printf("Error getting user homedir: %s", err)
+				continue
+			}
+			loc = strings.Replace(loc, "~", user.HomeDir, 1)
+		}
+
+		cts, err := ioutil.ReadFile(loc)
+		if err == nil {
+			return strings.TrimSpace(string(cts))
+		} else if os.IsNotExist(err) {
+			continue
+		} else {
+			log.Printf("Error reading config file %s: %s", loc, err)
 		}
 	}
 	return ""
@@ -62,7 +88,10 @@ func determineHostname() string {
 
 func main() {
 	if serverRoot == "" {
-		serverRoot = defaultServerRoot
+		serverRoot = getServerFromCfgFile()
+		if serverRoot == "" {
+			serverRoot = defaultServerRoot
+		}
 	}
 
 	if len(os.Args) < 2 {
