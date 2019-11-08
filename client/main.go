@@ -61,7 +61,7 @@ func determineHostname() string {
 	return ""
 }
 
-var cfgFileLocations = []string{"/etc/sanitarium-server.cfg", "~/.sanitarium-server.cfg"}
+var cfgFileLocations = []string{"/etc/sanitarium/server.cfg", "~/.sanitarium/server.cfg"}
 
 func getServerFromCfgFile() string {
 	for _, loc := range cfgFileLocations {
@@ -95,6 +95,11 @@ func main() {
 	}
 
 	if len(os.Args) < 2 {
+		fmt.Println("Welcome to Sanitarium")
+		fmt.Println("To use, just add the standard SSH arguments to the command")
+		fmt.Println("This build has default server:", defaultServerRoot)
+		fmt.Println("Configured hostname (/etc/sanitarium-server.cfg, ~/.sanitarium/server.cfg):", serverRoot)
+
 		log.Fatalf("No hostname provided")
 	}
 	sshServerName = determineHostname()
