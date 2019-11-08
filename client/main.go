@@ -15,6 +15,7 @@ import (
 
 	"github.com/puiterwijk/sanitarium/client/internal"
 	int_cache "github.com/puiterwijk/sanitarium/client/internal/cache"
+	"github.com/puiterwijk/sanitarium/client/internal/config"
 	service "github.com/puiterwijk/sanitarium/client/internal/service"
 	"github.com/puiterwijk/sanitarium/shared/security"
 )
@@ -26,8 +27,7 @@ var (
 )
 
 var (
-	serverRoot        = os.Getenv("SERVER_ROOT")
-	defaultServerRoot = "https://server-dendraeck.e4ff.pro-eu-west-1.openshiftapps.com"
+	serverRoot = os.Getenv("SERVER_ROOT")
 
 	attemptTPM         = false
 	attemptMeasurement = false
@@ -90,14 +90,14 @@ func main() {
 	if serverRoot == "" {
 		serverRoot = getServerFromCfgFile()
 		if serverRoot == "" {
-			serverRoot = defaultServerRoot
+			serverRoot = config.DefaultServerRoot
 		}
 	}
 
 	if len(os.Args) < 2 {
 		fmt.Println("Welcome to Sanitarium")
 		fmt.Println("To use, just add the standard SSH arguments to the command")
-		fmt.Println("This build has default server:", defaultServerRoot)
+		fmt.Println("This build has default server:", config.DefaultServerRoot)
 		fmt.Println("Configured hostname (/etc/sanitarium-server.cfg, ~/.sanitarium/server.cfg):", serverRoot)
 
 		log.Fatalf("No hostname provided")
