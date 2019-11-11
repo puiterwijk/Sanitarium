@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"os"
 )
 
@@ -22,8 +23,15 @@ func main() {
 		log.Printf("Defaulting to port %s", port)
 	}
 
+	var addr string
+	if strings.Contains(port, ":") {
+		addr = port
+	} else {
+		addr = fmt.Sprintf(":s", port)
+	}
+
 	server := http.Server{
-		Addr: fmt.Sprintf(":%s", port),
+		Addr: addr,
 	}
 
 	registerHandlers()
