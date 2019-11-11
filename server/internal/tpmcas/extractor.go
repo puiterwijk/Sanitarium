@@ -161,7 +161,15 @@ func generatefile(outdir string, outvars map[string][]byte) string {
 		panic(err)
 	}
 
-	for varname, cts := range outvars {
+	// Build a sorted list of keys so the file is regenerated the same every time
+	var varnames []string
+	for varname := range outvars {
+		varnames = append(varnames, varname)
+	}
+	sort.Strings(varnames)
+
+	for _, varname := range varnames {
+		cts := outvars[varname]
 		_, err = outfile.Write([]byte(fmt.Sprintf(`var %s = []byte{
     `, varname)))
 		if err != nil {
