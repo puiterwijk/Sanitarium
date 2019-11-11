@@ -4,30 +4,27 @@ import (
 	"crypto/rsa"
 	"errors"
 	"fmt"
-	"io/ioutil"
 
 	"github.com/google/certificate-transparency-go/asn1"
 	"github.com/google/certificate-transparency-go/x509"
 
 	"github.com/google/go-attestation/attest"
+
 	"github.com/puiterwijk/sanitarium/shared/types"
+	"github.com/puiterwijk/sanitarium/server/internal/tpmcas"
 )
 
 var (
-	tpmCertPool = x509.NewCertPool()
+	tpmVerifyOpts *x509.VerifyOptions
 )
 
 func init() {
-	// TODO: Load trusted certs from somewhere
-	certdata, err := ioutil.ReadFile("OptigaRsaMfrCA035.crt")
+	var err error
+
+	tpmVerifyOpts, err = tpmcas.GetTPMEKVerifyOptions()
 	if err != nil {
 		panic(err)
 	}
-	cert, err := x509.ParseCertificate(certdata)
-	if err != nil {
-		panic(err)
-	}
-	tpmCertPool.AddCert(cert)
 }
 
 func validateTPMEKCert(cert *x509.Certificate) ([]byte, error) {
@@ -39,10 +36,7 @@ func validateTPMEKCert(cert *x509.Certificate) ([]byte, error) {
 	pubkey := x509.MarshalPKCS1PublicKey(pkey)
 
 	cert.UnhandledCriticalExtensions = []asn1.ObjectIdentifier{}
-	_, err := cert.Verify(x509.VerifyOptions{
-		Roots:     tpmCertPool,
-		KeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageAny},
-	})
+	_, err := cert.Verify(*tpmVerifyOpts)
 	return pubkey, err
 }
 

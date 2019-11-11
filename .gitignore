@@ -11,7 +11,9 @@
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
+# Binaries
 /server/server
 /client/client
 
-/server/signerkey.pem*
+# Generated files
+/server/internal/tpmcas/certificates.generated.go

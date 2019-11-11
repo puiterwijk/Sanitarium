@@ -1,0 +1,3 @@
+server/server
+client/client
+server/internal/tpmcas/certificates.generated.go
