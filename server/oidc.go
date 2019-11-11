@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"os"
 
 	oidc "github.com/coreos/go-oidc"
 	"golang.org/x/oauth2"
@@ -20,6 +21,10 @@ var (
 )
 
 func init() {
+	if tokenInfoURL == "" {
+		fmt.Fprintln(os.Stderr, "WARNING: No OpenID Connect token info URL provided. Scopes will not be verified!")
+	}
+
 	oidcProvider, err := oidc.NewProvider(context.Background(), serviceinfo.OIDC.ProviderRoot)
 	if err != nil {
 		panic(err)
@@ -67,6 +72,10 @@ func setMin(required, provided []string) []string {
 }
 
 func checkTokenScopes(ctx context.Context, accesstoken string) error {
+	if tokenInfoURL == "" {
+		return nil
+	}
+
 	resp, err := http.PostForm(
 		tokenInfoURL,
 		url.Values{
