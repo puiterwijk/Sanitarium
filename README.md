@@ -42,6 +42,7 @@ Validity periods can be specified in a number and a possible suffix according to
 
 | Environment variable   | Meaning |
 |------------------------|---------|
+| `PORT`                 | The TCP port the server should listen on (defaults to `8080`). |
 | `SERVICE_ROOT`         | The URL the server will be made available on, without trailing slash. |
 | `OIDC_PROVIDER_ROOT`   | The base of the OpenID Connect provider URL. |
 | `OIDC_CLIENT_ID`       | The client ID to use for authenticating to the OpenID Connect provider. |
