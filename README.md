@@ -2,7 +2,7 @@
 
 Sanitarium is a tool for running an SSH client certificate authority, using OpenID Connect for authentication.
 
-> **WARNING**: This code is still relatively new, has not had a security audit. The API may change as a result of future changes.
+> **WARNING**: This code is still relatively new, and has not had a security audit. The API may change as a result of future changes.
 
 For Linux systems with a TPM2 device onboard, it is able to protect intermediate credentials with the TPM.
 
