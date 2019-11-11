@@ -27,7 +27,7 @@ func main() {
 	if strings.Contains(port, ":") {
 		addr = port
 	} else {
-		addr = fmt.Sprintf(":s", port)
+		addr = fmt.Sprintf(":%s", port)
 	}
 
 	server := http.Server{
