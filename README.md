@@ -14,6 +14,10 @@ To build them, you will need to have the Go compiler, Git and [trousers](http://
 
 To install these requirements on a Fedora or RHEL system, run: `dnf install -y golang git trousers-devel`
 
+To build the server, we will need to get the list of trusted TPM vendor certificates extracted.
+This is not part of the repository, so that it gets rebuilt upon user request.
+To do that, you will need to install `cabextract` (`dnf install -y cabextract`) and then run `go generate ./...`.
+
 After this, you can change to either the `server/` or `client/` directory, and run `go build`.
 
 For the client, it might be useful to compile in the URL-base of the server you are intending to use, which you can accomplish with:
