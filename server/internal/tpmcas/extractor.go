@@ -3,6 +3,7 @@
 package main
 
 import (
+	"encoding/hex"
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
@@ -122,8 +123,6 @@ func getcertpaths(rootdir string) (roots, intermediates []string) {
 }
 
 func writebytes(out io.Writer, cts []byte) {
-	const hextable = "0123456789abcdef"
-
 	var err error
 	var inline int
 
@@ -136,10 +135,9 @@ func writebytes(out io.Writer, cts []byte) {
 			inline = 0
 		}
 
-		chr1 := string(hextable[bt>>4])
-		chr2 := string(hextable[bt&0x0f])
+		chrs := hex.EncodeToString([]byte{bt})
 
-		_, err = fmt.Fprintf(out, "0x%s%s, ", chr1, chr2)
+		_, err = fmt.Fprintf(out, "0x%s, ", chrs)
 
 		if err != nil {
 			panic(err)
