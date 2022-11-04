@@ -1,10 +1,11 @@
+//go:build runwithgorun
 // +build runwithgorun
 
 package main
 
 import (
-	"encoding/hex"
 	"crypto/x509"
+	"encoding/hex"
 	"encoding/pem"
 	"fmt"
 	"io"
@@ -184,24 +185,31 @@ func generatefile(outdir string, outvars map[string][]byte) string {
 	return outfile.Name()
 }
 
+const (
+	STM_ERROR_VARIANT_ONE = "asn1: structure error: integer not minimally-encoded"
+	STM_ERROR_VARIANT_TWO = "x509: malformed serial number"
+)
+
 func certerrorfatal(certpath string, err error) bool {
 	// Allow some invalidly encoded STM Micro intermediate certificates to not be fatal
-	if strings.HasSuffix(certpath, "STMicro/IntermediateCA/STM TPM ECC Intermediate CA 01.crt") && err.Error() == "asn1: structure error: integer not minimally-encoded" {
+	isStmError := err.Error() == STM_ERROR_VARIANT_ONE || err.Error() == STM_ERROR_VARIANT_TWO
+
+	if strings.HasSuffix(certpath, "STMicro/IntermediateCA/STM TPM ECC Intermediate CA 01.crt") && isStmError {
 		return false
 	}
-	if strings.HasSuffix(certpath, "STMicro/IntermediateCA/STM TPM EK Intermediate CA 01.crt") && err.Error() == "asn1: structure error: integer not minimally-encoded" {
+	if strings.HasSuffix(certpath, "STMicro/IntermediateCA/STM TPM EK Intermediate CA 01.crt") && isStmError {
 		return false
 	}
-	if strings.HasSuffix(certpath, "STMicro/IntermediateCA/STM TPM EK Intermediate CA 02.crt") && err.Error() == "asn1: structure error: integer not minimally-encoded" {
+	if strings.HasSuffix(certpath, "STMicro/IntermediateCA/STM TPM EK Intermediate CA 02.crt") && isStmError {
 		return false
 	}
-	if strings.HasSuffix(certpath, "STMicro/IntermediateCA/STM TPM EK Intermediate CA 03.crt") && err.Error() == "asn1: structure error: integer not minimally-encoded" {
+	if strings.HasSuffix(certpath, "STMicro/IntermediateCA/STM TPM EK Intermediate CA 03.crt") && isStmError {
 		return false
 	}
-	if strings.HasSuffix(certpath, "STMicro/IntermediateCA/STM TPM EK Intermediate CA 04.crt") && err.Error() == "asn1: structure error: integer not minimally-encoded" {
+	if strings.HasSuffix(certpath, "STMicro/IntermediateCA/STM TPM EK Intermediate CA 04.crt") && isStmError {
 		return false
 	}
-	if strings.HasSuffix(certpath, "STMicro/IntermediateCA/STM TPM EK Intermediate CA 05.crt") && err.Error() == "asn1: structure error: integer not minimally-encoded" {
+	if strings.HasSuffix(certpath, "STMicro/IntermediateCA/STM TPM EK Intermediate CA 05.crt") && isStmError {
 		return false
 	}
 	return true
@@ -211,6 +219,9 @@ func concatcerts(paths []string) (out []byte) {
 	var haderror bool
 
 	for _, path := range paths {
+		if strings.HasSuffix(path, ".txt") {
+			continue
+		}
 		cts, err := ioutil.ReadFile(path)
 		if err != nil {
 			panic(err)
