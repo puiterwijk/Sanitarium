@@ -21,7 +21,7 @@ type intermediateCertInfo struct {
 
 	TPMVersion  attest.TPMVersion            `json:"tpmversion"`
 	EKPublicKey []byte                       `json:"ekpubkey"`
-	AIK         attest.AttestationParameters `json:"aik"`
+	AK          attest.AttestationParameters `json:"ak"`
 }
 
 func handleIntermediateCertAuth(ctx context.Context, authzcode string) (string, error) {
@@ -52,7 +52,7 @@ func handleIntermediateCertRequest(ctx context.Context, req types.IntermediateCe
 	if serviceinfo.Requirements.TPM {
 		out.TPMVersion = attest.TPMVersion(req.Attestation.Static.TPMVersion)
 		out.EKPublicKey = ekpubkey
-		out.AIK = req.Attestation.AIK
+		out.AK = req.Attestation.AK
 	}
 
 	return &out, nil

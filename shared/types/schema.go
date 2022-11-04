@@ -44,13 +44,13 @@ type IntermediateCertificateRequestAttestation struct {
 		EKPem      []byte `json:"ekpem"`
 	} `json:"static"`
 
-	AIK struct {
+	AK struct {
 		Public                  []byte
 		UseTCSDActivationFormat bool
 		CreateData              []byte
 		CreateAttestation       []byte
 		CreateSignature         []byte
-	} `json:"aik"`
+	} `json:"ak"`
 
 	Quote struct {
 		Quote     []byte

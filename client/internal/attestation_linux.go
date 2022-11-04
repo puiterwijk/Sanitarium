@@ -1,3 +1,4 @@
+//go:build linux
 // +build linux
 
 package internal
@@ -51,20 +52,20 @@ func CreateAttestation(cache *int_cache.Cache, nonce []byte, dotpm, domeasuremen
 		return nil, fmt.Errorf("Unable to get EKPEM: %s", err)
 	}
 
-	// Add AIK
-	aik, err := cache.GetAIK()
+	// Add AK
+	ak, err := cache.GetAK()
 	if err != nil {
-		return nil, fmt.Errorf("Unable to get AIK: %s", err)
+		return nil, fmt.Errorf("Unable to get AK: %s", err)
 	}
-	defer cache.CloseAIK(aik)
-	out.AIK = aik.AttestationParameters()
+	defer cache.CloseAK(ak)
+	out.AK = ak.AttestationParameters()
 
 	if !domeasurements {
 		return &out, nil
 	}
 
 	// Add Quote
-	q, err := aik.Quote(tpm, nonce, attest.HashSHA256)
+	q, err := ak.Quote(tpm, nonce, attest.HashSHA256)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to get quote: %s", err)
 	}

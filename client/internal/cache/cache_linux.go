@@ -1,3 +1,4 @@
+//go:build linux
 // +build linux
 
 package cache
@@ -38,10 +39,10 @@ func (c *Cache) GetTPM() *attest.TPM {
 	return c.tpm
 }
 
-func (c *Cache) createAIK() (*attest.AIK, error) {
+func (c *Cache) createAK() (*attest.AK, error) {
 	c.ensureTPM()
 
-	k, err := c.tpm.NewAIK(&attest.AIKConfig{})
+	k, err := c.tpm.NewAK(&attest.AKConfig{})
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +51,7 @@ func (c *Cache) createAIK() (*attest.AIK, error) {
 		k.Close(c.tpm)
 		return nil, err
 	}
-	err = ioutil.WriteFile(path.Join(c.dir, "aik.json"), b, 0600)
+	err = ioutil.WriteFile(path.Join(c.dir, "ak.json"), b, 0600)
 	if err != nil {
 		k.Close(c.tpm)
 		return nil, err
@@ -58,25 +59,25 @@ func (c *Cache) createAIK() (*attest.AIK, error) {
 	return k, nil
 }
 
-func (c *Cache) GetAIK() (*attest.AIK, error) {
+func (c *Cache) GetAK() (*attest.AK, error) {
 	c.ensureTPM()
 
-	b, err := ioutil.ReadFile(path.Join(c.dir, "aik.json"))
+	b, err := ioutil.ReadFile(path.Join(c.dir, "ak.json"))
 	if err != nil {
 		if os.IsNotExist(err) {
-			return c.createAIK()
+			return c.createAK()
 		}
 		return nil, err
 	}
-	k, err := c.tpm.LoadAIK(b)
+	k, err := c.tpm.LoadAK(b)
 	return k, err
 }
 
-func (c *Cache) CloseAIK(k *attest.AIK) {
+func (c *Cache) CloseAK(k *attest.AK) {
 	c.ensureTPM()
 
 	err := k.Close(c.tpm)
 	if err != nil {
-		log.Printf("Error closing AIK: %s", err)
+		log.Printf("Error closing AK: %s", err)
 	}
 }

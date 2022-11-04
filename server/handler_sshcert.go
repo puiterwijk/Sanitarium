@@ -117,7 +117,7 @@ func sshCertHandler(w http.ResponseWriter, r *http.Request) {
 func encryptSSHCert(intcert *intermediateCertInfo, certresp *types.SSHCertResponse, cert []byte) error {
 	act := new(attest.ActivationParameters)
 	act.TPMVersion = intcert.TPMVersion
-	act.AIK = intcert.AIK
+	act.AK = intcert.AK
 	ekpub, err := x509.ParsePKCS1PublicKey(intcert.EKPublicKey)
 	if err != nil {
 		return fmt.Errorf("Error getting EKPub: %s", err)
