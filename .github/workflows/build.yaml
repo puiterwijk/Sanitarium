@@ -1,0 +1,79 @@
+name: Builds
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-server:
+    permissions:
+      contents: read
+      packages: write
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 1
+    - name: metadata
+      id: metadata
+      uses: docker/metadata-action@v4
+      with:
+        images: ghcr.io/puiterwijk/sanitarium-server
+        tags: |
+          type=ref,event=branch
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=semver,pattern={{major}},enable=${{ !startsWith(github.ref, 'refs/tags/v0.') }}
+        sep-tags: " "
+    - name: Buildah Action
+      id: build-image
+      uses: redhat-actions/buildah-build@v2
+      with:
+        tags: "sanitarium-server:local ${{ steps.metadata.outputs.tags }}"
+        containerfiles: |
+          ./Dockerfile.server
+    - name: Log in to the GitHub Container registry
+      if: steps.metadata.outputs.tags != ''
+      uses: redhat-actions/podman-login@v1
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    - name: Push to GitHub Container Repository
+      if: steps.metadata.outputs.tags != ''
+      id: push-to-ghcr
+      uses: redhat-actions/push-to-registry@v2
+      with:
+        tags: "${{ steps.metadata.outputs.tags }}"
+
+  build-client:
+    strategy:
+      matrix:
+        os:
+        - linux
+        - darwin
+        arch:
+        - amd64
+        - arm64
+        server:
+        - url: https://sshauth.profian.com
+          name: profian
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 1
+    - run: go build -o client -ldflags "-X github.com/puiterwijk/sanitarium/client/internal/config.DefaultServerRoot=https://${{ matrix.server.url }}"
+      working-directory: client
+      env:
+        GOOS: ${{ matrix.os }}
+        GOARCH: ${{ matrix.arch }}
+    - uses: actions/upload-artifact@v3
+      with:
+        name: "client-${{ matrix.server.name }}-${{ matrix.os }}-${{ matrix.arch }}"
+        path: client/client
