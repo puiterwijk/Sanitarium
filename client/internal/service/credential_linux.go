@@ -1,3 +1,4 @@
+//go:build linux
 // +build linux
 
 package service
@@ -13,17 +14,17 @@ import (
 )
 
 func (s *Service) activateCredential(ec *types.SSHCertResponseEncryptedCredential, nonce, encrypted []byte) ([]byte, error) {
-	aik, err := s.cache.GetAIK()
+	ak, err := s.cache.GetAK()
 	if err != nil {
-		return nil, fmt.Errorf("Unable to get AIK: %s", err)
+		return nil, fmt.Errorf("Unable to get AK: %s", err)
 	}
-	defer s.cache.CloseAIK(aik)
+	defer s.cache.CloseAK(ak)
 
 	rawec := attest.EncryptedCredential{
 		Credential: ec.Credential,
 		Secret:     ec.Secret,
 	}
-	secret, err := aik.ActivateCredential(s.cache.GetTPM(), rawec)
+	secret, err := ak.ActivateCredential(s.cache.GetTPM(), rawec)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to activate credential: %s", err)
 	}

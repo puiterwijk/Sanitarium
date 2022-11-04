@@ -10,8 +10,8 @@ import (
 
 	"github.com/google/go-attestation/attest"
 
-	"github.com/puiterwijk/sanitarium/shared/types"
 	"github.com/puiterwijk/sanitarium/server/internal/tpmcas"
+	"github.com/puiterwijk/sanitarium/shared/types"
 )
 
 var (
@@ -59,12 +59,12 @@ func ValidateAttestation(serviceinfo *types.ServiceInfo, nonce []byte, attestati
 		return nil, fmt.Errorf("Error validating TPM EK Certificate: %s", err)
 	}
 
-	aik, err := attest.ParseAIKPublic(
+	ak, err := attest.ParseAKPublic(
 		attest.TPMVersion(attestation.Static.TPMVersion),
-		attestation.AIK.Public,
+		attestation.AK.Public,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("Error parsing AIK Public: %s", err)
+		return nil, fmt.Errorf("Error parsing AK Public: %s", err)
 	}
 
 	if !serviceinfo.Requirements.Measurements {
@@ -88,7 +88,7 @@ func ValidateAttestation(serviceinfo *types.ServiceInfo, nonce []byte, attestati
 		)
 	}
 
-	if err := aik.Verify(q, pcrs, nonce); err != nil {
+	if err := ak.Verify(q, pcrs, nonce); err != nil {
 		return nil, fmt.Errorf("Error validating quote: %s", err)
 	}
 
