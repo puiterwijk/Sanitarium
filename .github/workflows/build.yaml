@@ -19,6 +19,28 @@ jobs:
     - uses: actions/checkout@v3
       with:
         fetch-depth: 1
+    - uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+    - name: Cache TPM CA bundle
+      id: cache-tpmcas
+      uses: actions/cache@v3
+      with:
+        path: server/internal/tpmcas/certificates.generated.go
+        key: ${{ runner.os }}-tpmcas
+    - name: Build TPM CA bundle
+      if: steps.cache-tpmcas.outputs.cache-hit != 'true'
+      run: |
+        sudo apt-get install -y cabextract
+        go generate ./...
+    - name: Build server
+      working-directory: server
+      run: go build -o server
     - name: metadata
       id: metadata
       uses: docker/metadata-action@v4
@@ -36,7 +58,7 @@ jobs:
       with:
         tags: "sanitarium-server:local ${{ steps.metadata.outputs.tags }}"
         containerfiles: |
-          ./Dockerfile.server
+          ./Dockerfile.server.prebuilt
     - name: Log in to the GitHub Container registry
       if: steps.metadata.outputs.tags != ''
       uses: redhat-actions/podman-login@v1

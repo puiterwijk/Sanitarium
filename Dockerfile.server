@@ -1,14 +1,19 @@
 FROM fedora:latest
-RUN yum install -y golang git trousers-devel cabextract
+RUN yum install -y golang
+RUN yum install -y cabextract
+COPY server/internal/tpmcas/extractor.go /home/extractor.go
+WORKDIR /home
+RUN go run extractor.go
+
+FROM fedora:latest
+RUN yum install -y golang
 COPY . /home
+COPY --from=0 /home/certificates.generated.go /home/server/internal/tpmcas/certificates.generated.go
 WORKDIR /home/server
-# This grabs the current set of TPM certificates
-RUN go generate ./...
 RUN go build
 
-FROM registry.access.redhat.com/ubi8/ubi-minimal
-RUN microdnf install trousers-lib
-COPY --from=0 /home/server/server /bin/server
+FROM registry.access.redhat.com/ubi9/ubi-minimal
+COPY --from=1 /home/server/server /bin/server
 EXPOSE 8080
 USER 1000
 CMD ["/bin/server"]

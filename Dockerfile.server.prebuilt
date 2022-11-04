@@ -1,0 +1,5 @@
+FROM registry.access.redhat.com/ubi9/ubi-minimal
+COPY server/server /bin/server
+EXPOSE 8080
+USER 1000
+CMD ["/bin/server"]
